@@ -362,7 +362,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-check fa-fw"></i>更新日期:&nbsp;&nbsp;
-                    2022-01-27
+                    2022-02-01
                 </div>
                 
 
@@ -399,7 +399,7 @@
 </ul>
 <p>实验的地址在<a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.828/2020/labs/syscall.html">这里</a></p>
 <h3 id="System-call-tracing"><a href="#System-call-tracing" class="headerlink" title="System call tracing"></a>System call tracing</h3><p>这个任务需要添加一个系统调用<strong>trace</strong>来追踪一个特定的系统调用的调用过程。在xv6中，每一个系统调用都有一个对应的编号，比如<strong>fork</strong>对应的编号<strong>SYS_fork</strong>值为1，而trace通过掩码的形式来追踪特定的系统调用，例如追踪fork，则调用trace(1 &lt;&lt; SYS_fork)，如果追踪到了就要输出进程id、系统调用的名称和返回值，并且trace还应该对子进程进行追踪。</p>
-<p>这张图比较清晰的描述了系统调用的流程：<img src="https://img2020.cnblogs.com/blog/853921/202201/853921-20220113171702431-1887170168.png" alt="syscall"></p>
+<p>这张图比较清晰的描述了系统调用的流程：<img src="syscall.png" alt="syscall"></p>
 <p>根据任务提示，我们首先应该像lab1一样在Makefile中添加<code>$U/_trace</code>到 UPROGS。</p>
 <p>然后分别在对应的文件中添加<strong>trace</strong>的相关声明：</p>
 <pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//user/user.h</span>

@@ -1,0 +1,1268 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="MIT 6.s801 Lab3 pagetabel, HUST UniqueStudio 联创团队">
+    <meta name="description" content="华中科技大学 | UniqueStudio-Lab | Kernel &amp; Cloud">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    <title>MIT 6.s801 Lab3 pagetabel | 观云岚-Watari&#39;s Blog</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+
+    <script src="/libs/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 5.4.0">
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+</head>
+
+
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">观云岚-Watari&#39;s Blog</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fas fa-bars"></i></a>
+<ul class="right nav-menu">
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/" class="waves-effect waves-light">
+      
+      <i class="fas fa-home" style="zoom: 0.6;"></i>
+      
+      <span>首页</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/tags" class="waves-effect waves-light">
+      
+      <i class="fas fa-tags" style="zoom: 0.6;"></i>
+      
+      <span>标签</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/categories" class="waves-effect waves-light">
+      
+      <i class="fas fa-bookmark" style="zoom: 0.6;"></i>
+      
+      <span>分类</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/archives" class="waves-effect waves-light">
+      
+      <i class="fas fa-archive" style="zoom: 0.6;"></i>
+      
+      <span>归档</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/about" class="waves-effect waves-light">
+      
+      <i class="fas fa-user-circle" style="zoom: 0.6;"></i>
+      
+      <span>关于</span>
+    </a>
+    
+  </li>
+  
+  <li>
+    <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+      <i id="searchIcon" class="fas fa-search" title="搜索" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+</ul>
+
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">观云岚-Watari&#39;s Blog</div>
+        <div class="logo-desc">
+            
+            华中科技大学 | UniqueStudio-Lab | Kernel &amp; Cloud
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+        <li class="m-nav-item">
+	  
+		<a href="/" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-home"></i>
+			
+			首页
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/tags" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-tags"></i>
+			
+			标签
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/categories" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-bookmark"></i>
+			
+			分类
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/archives" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-archive"></i>
+			
+			归档
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/about" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-user-circle"></i>
+			
+			关于
+		</a>
+          
+        </li>
+        
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/3.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <h1 class="description center-align post-title">MIT 6.s801 Lab3 pagetabel</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        width: 345px;
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        padding: 35px 0 15px 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content {
+        padding-bottom: 30px;
+        overflow: auto;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+
+        position: absolute;
+        right: 23.5vw;
+        display: block;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/MIT/">
+                                <span class="chip bg-color">MIT</span>
+                            </a>
+                        
+                            <a href="/tags/OS/">
+                                <span class="chip bg-color">OS</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Labs/" class="post-category">
+                                Labs
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                
+                <div class="post-date info-break-policy">
+                    <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2022-02-14
+                </div>
+                
+
+                
+                <div class="post-date info-break-policy">
+                    <i class="far fa-calendar-check fa-fw"></i>更新日期:&nbsp;&nbsp;
+                    2022-02-15
+                </div>
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
+                    2.7k
+                </div>
+                
+
+                
+
+                
+            </div>
+        </div>
+        <hr class="clearfix">
+
+        
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism.css">
+        
+
+        
+
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <p>过年耽误了不少时间，再加上看OSTEP，Lab3就一直拖到了现在。</p>
+<p>注意：ArchLinux下按照官网的Guide安装的环境里qemu的版本是更新过的，2020版本的实验执行qemu后会导致挂起，前两个实验因为用的2021的环境所以没发现这个问题，但是Lab3的内容不一样导致我修了半天环境才继续做。</p>
+<p>Lab3的主要内容是页表，难度相对前两个Lab难了不是一点，理解起来也比较抽象，涉及到内核态页表，用户态页表，还有多级页表的寻址，虚拟地址与物理地址的映射，页表条目之间的转换以及申请新的页表时，栈空间，进程空间还有符号位的各种标记，需要精读xv6这一块的代码才能比较好的理解。</p>
+<p>具体的笔记等以后有空再补吧，先把实验细节补充上。</p>
+<p>本次实验的前置知识：xv6 Book的Chapter 3，阅读代码<code>kernel/vm.c</code>，<code>kernel/kalloc.c</code>，<code>kernel/memlayout.h</code>。</p>
+<p>其实还应该看一下<code>kernel/proc.c</code>，<code>kernel/exec</code>，<code>kernel/sysproc.c</code>，理解页表的创建和调用过程。</p>
+<h3 id="Print-a-page-table"><a href="#Print-a-page-table" class="headerlink" title="Print a page table"></a>Print a page table</h3><p>第一个任务是打印页表，要求打印页表的pte和pa，同时对多级页表进行分层的显示，具体格式见实验网页。</p>
+<p>这是本次实验最简单的任务，同时也能作为后续任务的调试工具。</p>
+<p>根据任务提示，<code>freewalk()</code>会是我们的突破口，仿照该函数我们可以写出递归打印页表的函数</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">void</span> <span class="token function">vmprinter</span><span class="token punctuation">(</span><span class="token class-name">pagetable_t</span> pagetable<span class="token punctuation">,</span> <span class="token keyword">int</span> level<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">512</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token class-name">pte_t</span> pte <span class="token operator">=</span> pagetable<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>pte <span class="token operator">&amp;</span> PTE_V<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      uint64 pa <span class="token operator">=</span> <span class="token function">PTE2PA</span><span class="token punctuation">(</span>pte<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> j <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> j <span class="token operator">&lt;</span> level<span class="token punctuation">;</span> j<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>j<span class="token punctuation">)</span> <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">" "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">".."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d: pte %p pa %p\n"</span><span class="token punctuation">,</span> i<span class="token punctuation">,</span> pte<span class="token punctuation">,</span> pa<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>pte <span class="token operator">&amp;</span> <span class="token punctuation">(</span>PTE_R <span class="token operator">|</span> PTE_W <span class="token operator">|</span> PTE_X<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">vmprinter</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">pagetable_t</span><span class="token punctuation">)</span>pa<span class="token punctuation">,</span> level<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>怎么判断是否到达多级页表树的叶节点？看代码可以知道叶节点的页表的RWX位一定不是全为0的，用这个可以判断，<code>freewalk()</code>也写的很清楚。</p>
+<p>然后打印页表即可，并且将函数定义添加到<code>kernel/defs.h</code>中。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">void</span> <span class="token function">vmprint</span><span class="token punctuation">(</span><span class="token class-name">pagetable_t</span> pagetable<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"page table %p\n"</span><span class="token punctuation">,</span> pagetable<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">vmprinter</span><span class="token punctuation">(</span>pagetable<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>为了能在一开始就打印页表，我们还需要在<code>exec.c</code>中<code>exec()</code>的<code>return argc;</code>前添加<code>if (p-&gt;pid == 1) { vmprint(p-&gt;pagetable); }</code></p>
+<p>这样任务一就算完成了。</p>
+<h3 id="A-kernel-page-table-per-process"><a href="#A-kernel-page-table-per-process" class="headerlink" title="A kernel page table per process"></a>A kernel page table per process</h3><p>任务二比较抽象，也是本次实验综合难度最高的一个任务。</p>
+<p>首先要理解内核态页表是什么：xv6维护一个公用的内核态页表，进程在切换到内核态时，页表也会切换成公用的内核态页表，而内核态页表和用户态页表最大的不同就是除了栈和蹦床帧等几个地方外，其余的都是采用直接映射的方式来转换地址，因此进程在用户态的页表中引用的虚拟地址需要在用户态再经过一次转换才能被内核态页表转换，例如，传递给write() 的缓冲区指针。任务二和任务三的目标是在内核态直接翻译进程的虚拟地址。</p>
+<p>回到任务二，这个任务的要求是为每个进程增加一个内核态页表，这样进程切换到内核态时就可以直接用该进程对应的内核态页表，而不是公用的，这样就免去了多一次转换的功夫。看完代码后就可以开始添加了，按照任务提示一步步完成。</p>
+<h4 id="第一步：添加kernel-pagetable"><a href="#第一步：添加kernel-pagetable" class="headerlink" title="第一步：添加kernel pagetable"></a>第一步：添加kernel pagetable</h4><p>在 <code>kernel/proc.h</code> 中的 <code>proc</code> 结构体中添加一个字段 <code>pagetable_t kpagetable;</code>，表示内核态页表。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// Per-process state</span>
+<span class="token keyword">struct</span> <span class="token class-name">proc</span> <span class="token punctuation">{</span>
+  <span class="token keyword">struct</span> <span class="token class-name">spinlock</span> lock<span class="token punctuation">;</span>
+
+  <span class="token comment">// p-&gt;lock must be held when using these:</span>
+  <span class="token keyword">enum</span> <span class="token class-name">procstate</span> state<span class="token punctuation">;</span>        <span class="token comment">// Process state</span>
+  <span class="token keyword">struct</span> <span class="token class-name">proc</span> <span class="token operator">*</span>parent<span class="token punctuation">;</span>         <span class="token comment">// Parent process</span>
+  <span class="token keyword">void</span> <span class="token operator">*</span>chan<span class="token punctuation">;</span>                  <span class="token comment">// If non-zero, sleeping on chan</span>
+  <span class="token keyword">int</span> killed<span class="token punctuation">;</span>                  <span class="token comment">// If non-zero, have been killed</span>
+  <span class="token keyword">int</span> xstate<span class="token punctuation">;</span>                  <span class="token comment">// Exit status to be returned to parent's wait</span>
+  <span class="token keyword">int</span> pid<span class="token punctuation">;</span>                     <span class="token comment">// Process ID</span>
+
+  <span class="token comment">// these are private to the process, so p-&gt;lock need not be held.</span>
+  uint64 kstack<span class="token punctuation">;</span>               <span class="token comment">// Virtual address of kernel stack</span>
+  uint64 sz<span class="token punctuation">;</span>                   <span class="token comment">// Size of process memory (bytes)</span>
+  <span class="token class-name">pagetable_t</span> pagetable<span class="token punctuation">;</span>       <span class="token comment">// User page table</span>
+  <span class="token class-name">pagetable_t</span> kpagetable<span class="token punctuation">;</span>      <span class="token comment">// 在这里添加</span>
+  <span class="token keyword">struct</span> <span class="token class-name">trapframe</span> <span class="token operator">*</span>trapframe<span class="token punctuation">;</span> <span class="token comment">// data page for trampoline.S</span>
+  <span class="token keyword">struct</span> <span class="token class-name">context</span> context<span class="token punctuation">;</span>      <span class="token comment">// swtch() here to run process</span>
+  <span class="token keyword">struct</span> <span class="token class-name">file</span> <span class="token operator">*</span>ofile<span class="token punctuation">[</span>NOFILE<span class="token punctuation">]</span><span class="token punctuation">;</span>  <span class="token comment">// Open files</span>
+  <span class="token keyword">struct</span> <span class="token class-name">inode</span> <span class="token operator">*</span>cwd<span class="token punctuation">;</span>           <span class="token comment">// Current directory</span>
+  <span class="token keyword">char</span> name<span class="token punctuation">[</span><span class="token number">16</span><span class="token punctuation">]</span><span class="token punctuation">;</span>               <span class="token comment">// Process name (debugging)</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h4 id="第二步：初始化内核态页表"><a href="#第二步：初始化内核态页表" class="headerlink" title="第二步：初始化内核态页表"></a>第二步：初始化内核态页表</h4><p><code>kernel/vm.c</code>里面提供了<code>kvminit()</code>来初始化原本的公用页表，仿照其写一个初始化函数即可。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token class-name">pagetable_t</span> <span class="token function">ukvminit</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token class-name">pagetable_t</span> kpagetable <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token class-name">pagetable_t</span><span class="token punctuation">)</span> <span class="token function">kalloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">memset</span><span class="token punctuation">(</span>kpagetable<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> PGSIZE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// uart registers</span>
+  <span class="token function">ukvmmap</span><span class="token punctuation">(</span>kpagetable<span class="token punctuation">,</span> UART0<span class="token punctuation">,</span> UART0<span class="token punctuation">,</span> PGSIZE<span class="token punctuation">,</span> PTE_R <span class="token operator">|</span> PTE_W<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// virtio mmio disk interface</span>
+  <span class="token function">ukvmmap</span><span class="token punctuation">(</span>kpagetable<span class="token punctuation">,</span> VIRTIO0<span class="token punctuation">,</span> VIRTIO0<span class="token punctuation">,</span> PGSIZE<span class="token punctuation">,</span> PTE_R <span class="token operator">|</span> PTE_W<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// CLINT</span>
+  <span class="token function">ukvmmap</span><span class="token punctuation">(</span>kpagetable<span class="token punctuation">,</span> CLINT<span class="token punctuation">,</span> CLINT<span class="token punctuation">,</span> <span class="token number">0x10000</span><span class="token punctuation">,</span> PTE_R <span class="token operator">|</span> PTE_W<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// PLIC</span>
+  <span class="token function">ukvmmap</span><span class="token punctuation">(</span>kpagetable<span class="token punctuation">,</span> PLIC<span class="token punctuation">,</span> PLIC<span class="token punctuation">,</span> <span class="token number">0x400000</span><span class="token punctuation">,</span> PTE_R <span class="token operator">|</span> PTE_W<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// map kernel text executable and read-only.</span>
+  <span class="token function">ukvmmap</span><span class="token punctuation">(</span>kpagetable<span class="token punctuation">,</span> KERNBASE<span class="token punctuation">,</span> KERNBASE<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>etext<span class="token operator">-</span>KERNBASE<span class="token punctuation">,</span> PTE_R <span class="token operator">|</span> PTE_X<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// map kernel data and the physical RAM we'll make use of.</span>
+  <span class="token function">ukvmmap</span><span class="token punctuation">(</span>kpagetable<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>etext<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>etext<span class="token punctuation">,</span> PHYSTOP<span class="token operator">-</span><span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>etext<span class="token punctuation">,</span> PTE_R <span class="token operator">|</span> PTE_W<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// map the trampoline for trap entry/exit to</span>
+  <span class="token comment">// the highest virtual address in the kernel.</span>
+  <span class="token function">ukvmmap</span><span class="token punctuation">(</span>kpagetable<span class="token punctuation">,</span> TRAMPOLINE<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>trampoline<span class="token punctuation">,</span> PGSIZE<span class="token punctuation">,</span> PTE_R <span class="token operator">|</span> PTE_X<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> kpagetable<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>注意：原本的kvmmap是直接为公用页表添加映射的，所以我们还要小改一下这个函数。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">void</span> <span class="token function">ukvmmap</span><span class="token punctuation">(</span><span class="token class-name">pagetable_t</span> kpagetable<span class="token punctuation">,</span>uint64 va<span class="token punctuation">,</span> uint64 pa<span class="token punctuation">,</span> uint64 sz<span class="token punctuation">,</span> <span class="token keyword">int</span> perm<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token function">mappages</span><span class="token punctuation">(</span>kpagetable<span class="token punctuation">,</span> va<span class="token punctuation">,</span> sz<span class="token punctuation">,</span> pa<span class="token punctuation">,</span> perm<span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"ukvmmap"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>然后在原本调用<code>kvminit()</code>的地方增加对<code>ukvminit()</code>的调用，根据提示可知是在在 <code>kernel/proc.c</code> 中的 <code>allocproc</code> 函数里：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// An empty user page table.</span>
+  p<span class="token operator">-&gt;</span>pagetable <span class="token operator">=</span> <span class="token function">proc_pagetable</span><span class="token punctuation">(</span>p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>pagetable <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token function">freeproc</span><span class="token punctuation">(</span>p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>p<span class="token operator">-&gt;</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// 在下面添加</span>
+  <span class="token comment">// An empty user kernel page table.</span>
+  p<span class="token operator">-&gt;</span>kpagetable <span class="token operator">=</span> <span class="token function">ukvminit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>kpagetable <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">freeproc</span><span class="token punctuation">(</span>p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>p<span class="token operator">-&gt;</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>第二步完成，注意把<code>ukvminit()</code>添加到<code>defs.h</code></p>
+<h4 id="第三步：初始化内核栈"><a href="#第三步：初始化内核栈" class="headerlink" title="第三步：初始化内核栈"></a>第三步：初始化内核栈</h4><p>根据任务提示，要求我们把原来是在 <code>kernel/proc.c</code> 中的 <code>procinit</code> 函数内的相关代码移到<code>allocproc()</code>中，因此在第二步添加的地方下面把<code>procinit</code>内的代码<strong>直接移入</strong> <code>allocproc</code>中。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"> <span class="token comment">// An empty user kernel page table.</span>
+ p<span class="token operator">-&gt;</span>kpagetable <span class="token operator">=</span> <span class="token function">ukvminit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ <span class="token keyword">if</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>kpagetable <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   <span class="token function">freeproc</span><span class="token punctuation">(</span>p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>p<span class="token operator">-&gt;</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+ <span class="token punctuation">}</span>
+ <span class="token comment">// 在下面添加</span>
+ <span class="token keyword">char</span> <span class="token operator">*</span>pa <span class="token operator">=</span> <span class="token function">kalloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ <span class="token keyword">if</span><span class="token punctuation">(</span>pa <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+   <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"kalloc"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ uint64 va <span class="token operator">=</span> <span class="token function">KSTACK</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">(</span>p <span class="token operator">-</span> proc<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ <span class="token function">ukvmmap</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>kpagetable<span class="token punctuation">,</span> va<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>pa<span class="token punctuation">,</span> PGSIZE<span class="token punctuation">,</span> PTE_R <span class="token operator">|</span> PTE_W<span class="token punctuation">)</span><span class="token punctuation">;</span>
+ p<span class="token operator">-&gt;</span>kstack <span class="token operator">=</span> va<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h4 id="第四步：在进程调度时切换内核页"><a href="#第四步：在进程调度时切换内核页" class="headerlink" title="第四步：在进程调度时切换内核页"></a>第四步：在进程调度时切换内核页</h4><p>其实前三步就已经完成了每个进程独有的内核态页表的创建，第四步是在调度时的修改。</p>
+<p>从xv6 Book中可以得知内核页的管理使用的是SATP寄存器，任务提示你要修改<code>schduler()</code>并且不要忘记在调用<code>w_satp()</code> 之后调用<code>sfence_vma()</code>，可以参考<code>kvminithart()</code>。注意要切换回来。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// change satp</span>
+<span class="token function">w_satp</span><span class="token punctuation">(</span><span class="token function">MAKE_SATP</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>kpagetable<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">sfence_vma</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// change process</span>
+<span class="token function">swtch</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>c<span class="token operator">-&gt;</span>context<span class="token punctuation">,</span> <span class="token operator">&amp;</span>p<span class="token operator">-&gt;</span>context<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// change back</span>
+<span class="token function">kvminithart</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h4 id="第五步：释放内核栈内存"><a href="#第五步：释放内核栈内存" class="headerlink" title="第五步：释放内核栈内存"></a>第五步：释放内核栈内存</h4><p>有始有终，既然添加了页表就要能够释放掉。</p>
+<p>释放页表的函数位于<code>kernel/proc.c</code>的<code>freeproc()</code>中，我们需要对这个函数进行修改</p>
+<p>释放页表的第一步是先释放页表内的内核栈，因为页表内存储的内核栈地址本身就是一个虚拟地址，需要先将这个地址指向的物理地址进行释放：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">if</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>trapframe<span class="token punctuation">)</span>
+  <span class="token function">kfree</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token operator">*</span><span class="token punctuation">)</span>p<span class="token operator">-&gt;</span>trapframe<span class="token punctuation">)</span><span class="token punctuation">;</span>
+p<span class="token operator">-&gt;</span>trapframe <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token comment">//在这里添加</span>
+<span class="token keyword">if</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>kstack<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token class-name">pte_t</span><span class="token operator">*</span> pte <span class="token operator">=</span> <span class="token function">walk</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>kpagetable<span class="token punctuation">,</span> p<span class="token operator">-&gt;</span>kstack<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span>pte <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"freeproc: walk"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">kfree</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">PTE2PA</span><span class="token punctuation">(</span><span class="token operator">*</span>pte<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+p<span class="token operator">-&gt;</span>kstack <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>注意需要将 <code>walk</code> 函数的定义添加到 <code>kernel/defs.h</code> 中，该函数的作用是从制定页表中的虚拟地址找到对应条目，然后通过<code>PTE2PA</code>转换成物理地址释放掉。</p>
+<h4 id="第六步：释放内核页表"><a href="#第六步：释放内核页表" class="headerlink" title="第六步：释放内核页表"></a>第六步：释放内核页表</h4><p>直接遍历所有的页表，释放所有有效的页表项即可。仿照 <code>freewalk</code> 函数。由于 <code>freewalk</code> 函数将对应的物理地址也直接释放了，我们这里释放的内核页表仅仅只是用户进程的一个备份，释放时仅释放页表的映射关系即可，不能将真实的物理地址也释放了。因此不能直接调用<code>freewalk</code> 函数，而是需要进行更改：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">void</span> <span class="token function">proc_freewalk</span><span class="token punctuation">(</span><span class="token class-name">pagetable_t</span> pagetable<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">512</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token class-name">pte_t</span> pte <span class="token operator">=</span> pagetable<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>pte <span class="token operator">&amp;</span> PTE_V<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      pagetable<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>pte <span class="token operator">&amp;</span> <span class="token punctuation">(</span>PTE_R <span class="token operator">|</span> PTE_W <span class="token operator">|</span> PTE_X<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        uint64 child <span class="token operator">=</span> <span class="token function">PTE2PA</span><span class="token punctuation">(</span>pte<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">proc_freewalk</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">pagetable_t</span><span class="token punctuation">)</span>child<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">kfree</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token operator">*</span><span class="token punctuation">)</span>pagetable<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>再在 <code>freeproc</code> 中进行调用：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// delete user pagetable</span>
+<span class="token keyword">if</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>pagetable<span class="token punctuation">)</span>
+  <span class="token function">proc_freepagetable</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>pagetable<span class="token punctuation">,</span> p<span class="token operator">-&gt;</span>sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+p<span class="token operator">-&gt;</span>pagetable <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token comment">// 在这里添加</span>
+<span class="token keyword">if</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>kpagetable<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function">proc_freewalk</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>kpagetable<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这样，我们对整个页表的创建，调度和释放的工作就做完了，只剩下修改原本进程切入内核态所使用的页表了。</p>
+<h4 id="第七步：切换进程内核页表"><a href="#第七步：切换进程内核页表" class="headerlink" title="第七步：切换进程内核页表"></a>第七步：切换进程内核页表</h4><p>在<code>vm.c</code> 中添加头文件：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"spinlock.h"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"proc.h"</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>然后更改 <code>kvmpa</code> 函数：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c">pte <span class="token operator">=</span> <span class="token function">walk</span><span class="token punctuation">(</span><span class="token function">myproc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-&gt;</span>kpagetable<span class="token punctuation">,</span> va<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h3 id="Simplify-copyin-copyinstr"><a href="#Simplify-copyin-copyinstr" class="headerlink" title="Simplify copyin/copyinstr"></a>Simplify <code>copyin/copyinstr</code></h3><p>通过任务二，我们已经完成了对每个进程创建一个对应的内核态页表，但最关键的问题是：它是空的！</p>
+<p>因此任务三的目标就是将用户进程页表的所有内容都复制到内核页表中，这样就可以完成内核态直接转换虚拟地址，同时该实验为我们提供了直接转换的简化版<code>copyin_new/copyinstr_new</code>函数，我们需要将原本的间接转换版本替换成新版。</p>
+<h4 id="第一步：复制页表内容"><a href="#第一步：复制页表内容" class="headerlink" title="第一步：复制页表内容"></a>第一步：复制页表内容</h4><p>仿照<code>uvmcopy()</code>，我们可以照猫画虎一个<code>u2kvmcopy()</code>：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">void</span> <span class="token function">u2kvmcopy</span><span class="token punctuation">(</span><span class="token class-name">pagetable_t</span> upagetable<span class="token punctuation">,</span> <span class="token class-name">pagetable_t</span> kpagetable<span class="token punctuation">,</span> uint64 oldsz<span class="token punctuation">,</span> uint64 newsz<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token class-name">pte_t</span> <span class="token operator">*</span>pte_u<span class="token punctuation">,</span> <span class="token operator">*</span>pte_k<span class="token punctuation">;</span>
+  uint64 pa<span class="token punctuation">,</span> i<span class="token punctuation">;</span>
+  uint flags<span class="token punctuation">;</span>
+  oldsz <span class="token operator">=</span> <span class="token function">PGROUNDUP</span><span class="token punctuation">(</span>oldsz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span><span class="token punctuation">(</span>i <span class="token operator">=</span> oldsz<span class="token punctuation">;</span> i <span class="token operator">&lt;</span> newsz<span class="token punctuation">;</span> i <span class="token operator">+=</span> PGSIZE<span class="token punctuation">)</span>
+  <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span>pte_u <span class="token operator">=</span> <span class="token function">walk</span><span class="token punctuation">(</span>upagetable<span class="token punctuation">,</span> i<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+      <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"u2kvmcopy: pte_u should exist"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span>pte_k <span class="token operator">=</span> <span class="token function">walk</span><span class="token punctuation">(</span>kpagetable<span class="token punctuation">,</span> i<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+      <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"u2kvmcopy: pte_k should exist"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    pa <span class="token operator">=</span> <span class="token function">PTE2PA</span><span class="token punctuation">(</span><span class="token operator">*</span>pte_u<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    flags <span class="token operator">=</span> <span class="token function">PTE_FLAGS</span><span class="token punctuation">(</span><span class="token operator">*</span>pte_u<span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token punctuation">(</span><span class="token operator">~</span>PTE_U<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token operator">*</span>pte_k <span class="token operator">=</span> <span class="token function">PA2PTE</span><span class="token punctuation">(</span>pa<span class="token punctuation">)</span> <span class="token operator">|</span> flags<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>注意，因为xv6设定了内核态不能访问PTE_U位为1的页表，因此我们最后要把该位设为0。</p>
+<h4 id="第二步：在对应位置调用页表复制"><a href="#第二步：在对应位置调用页表复制" class="headerlink" title="第二步：在对应位置调用页表复制"></a>第二步：在对应位置调用页表复制</h4><p>根据任务提示，我们需要修改的地方是三个函数：<code>fork()</code>，<code>sbrk()</code>，<code>exec()</code>。</p>
+<ul>
+<li><p><code>fork()</code></p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c">np<span class="token operator">-&gt;</span>cwd <span class="token operator">=</span> <span class="token function">idup</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>cwd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// 添加代码</span>
+  <span class="token function">u2kvmcopy</span><span class="token punctuation">(</span>np<span class="token operator">-&gt;</span>pagetable<span class="token punctuation">,</span> np<span class="token operator">-&gt;</span>kpagetable<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> np<span class="token operator">-&gt;</span>sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">safestrcpy</span><span class="token punctuation">(</span>np<span class="token operator">-&gt;</span>name<span class="token punctuation">,</span> p<span class="token operator">-&gt;</span>name<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>name<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
+<li><p><code>sbrk()</code></p>
+<p>sbrk() 需要到 <code>sysproc.c</code> 找，可以发现，调用的是 <code>growproc</code> 函数，在其中添加防止溢出的函数：</p>
+<pre class="line-numbers language-none"><code class="language-none">if(PGROUNDUP(sz + n) &gt;= PLIC) return -1;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+<li><p><code>exec()</code></p>
+<p>在执行新的程序前，初始化之后，进行页表拷贝：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token function">u2kvmcopy</span><span class="token punctuation">(</span>pagetable<span class="token punctuation">,</span> p<span class="token operator">-&gt;</span>kpagetable<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> sz<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// Push argument strings, prepare rest of stack in ustack.</span>
+  <span class="token keyword">for</span><span class="token punctuation">(</span>argc <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> argv<span class="token punctuation">[</span>argc<span class="token punctuation">]</span><span class="token punctuation">;</span> argc<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre></li>
+</ul>
+<p>除了这三个函数外，任务提示我们不要忘记在<code>userinit</code>的内核页表中包含第一个进程的用户页表。（<code>userinit()</code>在<code>kernel/proc.c</code>中）</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token function">uvminit</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>pagetable<span class="token punctuation">,</span> initcode<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>initcode<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+p<span class="token operator">-&gt;</span>sz <span class="token operator">=</span> PGSIZE<span class="token punctuation">;</span>
+
+<span class="token function">u2kvmcopy</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>pagetable<span class="token punctuation">,</span> p<span class="token operator">-&gt;</span>kpagetable<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> p<span class="token operator">-&gt;</span>sz<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h4 id="第三步：将copyin-copyinstr-换成copyin-new-copyinstr-new"><a href="#第三步：将copyin-copyinstr-换成copyin-new-copyinstr-new" class="headerlink" title="第三步：将copyin/copyinstr 换成copyin_new/copyinstr_new"></a>第三步：将<code>copyin/copyinstr</code> 换成<code>copyin_new/copyinstr_new</code></h4><p>将copyin和copyinstr函数内部全部注释掉，改为调用copyin_new和copyinstr_new函数即可。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Lab3的难度相当大，需要花费不少时间去看对应的代码并理解其作用，但做完一整套的流程下来，能够掌握xv6的页表创建，调用，释放的流程，加深了理解，总体来说收获还是非常丰富的。</p>
+
+                
+            </div>
+            <hr/>
+
+            
+
+    <div class="reprint" id="reprint-statement">
+        
+            <div class="reprint__author">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-user">
+                        文章作者:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="/about" rel="external nofollow noreferrer">Watari</a>
+                </span>
+            </div>
+            <div class="reprint__type">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-link">
+                        文章链接:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="https://watari.xyz/mit-6-s801-lab3-pagetabel/">https://watari.xyz/mit-6-s801-lab3-pagetabel/</a>
+                </span>
+            </div>
+            <div class="reprint__notice">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-copyright">
+                        版权声明:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    本博客所有文章除特別声明外，均采用
+                    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="external nofollow noreferrer" target="_blank">CC BY 4.0</a>
+                    许可协议。转载请注明来源
+                    <a href="/about" target="_blank">Watari</a>
+                    !
+                </span>
+            </div>
+        
+    </div>
+
+    <script async defer>
+      document.addEventListener("copy", function (e) {
+        let toastHTML = '<span>复制成功，请遵循本文的转载规则</span><button class="btn-flat toast-action" onclick="navToReprintStatement()" style="font-size: smaller">查看</a>';
+        M.toast({html: toastHTML})
+      });
+
+      function navToReprintStatement() {
+        $("html, body").animate({scrollTop: $("#reprint-statement").offset().top - 80}, 800);
+      }
+    </script>
+
+
+
+            <div class="tag_share" style="display: block;">
+                <div class="post-meta__tag-list" style="display: inline-block;">
+                    
+                        <div class="article-tag">
+                            
+                                <a href="/tags/MIT/">
+                                    <span class="chip bg-color">MIT</span>
+                                </a>
+                            
+                                <a href="/tags/OS/">
+                                    <span class="chip bg-color">OS</span>
+                                </a>
+                            
+                        </div>
+                    
+                </div>
+                <div class="post_share" style="zoom: 80%; width: fit-content; display: inline-block; float: right; margin: -0.15rem 0;">
+                    <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+<div id="article-share">
+
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
+            <div class="card">
+                <a href="/mit-6-s801-lab3-pagetabel/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/3.jpg" class="responsive-img" alt="MIT 6.s801 Lab3 pagetabel">
+                        
+                        <span class="card-title">MIT 6.s801 Lab3 pagetabel</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-02-14
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Labs/" class="post-category">
+                                    Labs
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/MIT/">
+                        <span class="chip bg-color">MIT</span>
+                    </a>
+                    
+                    <a href="/tags/OS/">
+                        <span class="chip bg-color">OS</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/mit-6-s801-lab2-syscall/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="MIT 6.s801 Lab2 syscall">
+                        
+                        <span class="card-title">MIT 6.s801 Lab2 syscall</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-01-27
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Labs/" class="post-category">
+                                    Labs
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/MIT/">
+                        <span class="chip bg-color">MIT</span>
+                    </a>
+                    
+                    <a href="/tags/OS/">
+                        <span class="chip bg-color">OS</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: 观云岚-Watari&#39;s Blog<br />'
+            + '文章作者: Watari<br />'
+            + '文章链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+<!-- 代码块功能依赖 -->
+<script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
+
+<!-- 代码语言 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeLang.js"></script>
+
+
+<!-- 代码块复制 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeCopy.js"></script>
+
+
+<!-- 代码块收缩 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeShrink.js"></script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget card" style="background-color: white;">
+            <div class="toc-title"><i class="far fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fas fa-list-ul"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            collapseDepth: Number('0'),
+            headingSelector: 'h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).hide();
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).show();
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+
+    <footer class="page-footer bg-color">
+    
+    <div class="container row center-align" style="margin-bottom: 0px !important;">
+        <div class="col s12 m8 l8 copy-right">
+            Copyright&nbsp;&copy;
+            
+                <span id="year">2021-2022</span>
+            
+            <span id="year">2021</span>
+            <a href="/about" target="_blank">Watari</a>
+            |&nbsp;Powered by&nbsp;<a href="https://hexo.io/" target="_blank">Hexo</a>
+            |&nbsp;Theme&nbsp;<a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>
+            <br>
+            
+            &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
+                class="white-color">5.5k</span>&nbsp;字
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv" style='display:none'>
+                |&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv" style='display:none'>
+                |&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            
+            <br>
+            
+            <br>
+            
+        </div>
+        <div class="col s12 m4 l4 social-link ">
+    <a href="https://github.com/lijiamu233" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fab fa-github"></i>
+    </a>
+
+
+
+    <a href="mailto:lijiamu200212@gmail.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+        <i class="fas fa-envelope-open"></i>
+    </a>
+
+
+
+
+
+
+
+    <a href="tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=1127915415" class="tooltipped" target="_blank" data-tooltip="QQ联系我: 1127915415" data-position="top" data-delay="50">
+        <i class="fab fa-qq"></i>
+    </a>
+
+
+
+
+
+    <a href="https://www.zhihu.com/people/li-jia-mu-18-19" class="tooltipped" target="_blank" data-tooltip="关注我的知乎: https://www.zhihu.com/people/li-jia-mu-18-19" data-position="top" data-delay="50">
+        <i class="fab fa-zhihu1">知</i>
+    </a>
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+<script>
+    $(document).ready(function () {
+
+        var int = setInterval(fixCount, 50);  // 50ms周期检测函数
+        var pvcountOffset = 80000;  // 初始化首次数据
+        var uvcountOffset = 20000;
+
+        function fixCount() {
+            if (document.getElementById("busuanzi_container_site_pv").style.display != "none") {
+                $("#busuanzi_value_site_pv").html(parseInt($("#busuanzi_value_site_pv").html()) + pvcountOffset);
+                clearInterval(int);
+            }
+            if ($("#busuanzi_container_site_pv").css("display") != "none") {
+                $("#busuanzi_value_site_uv").html(parseInt($("#busuanzi_value_site_uv").html()) + uvcountOffset); // 加上初始数据 
+                clearInterval(int); // 停止检测
+            }
+        }
+    });
+</script>
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fas fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(function () {
+    var searchFunc = function (path, search_id, content_id) {
+        'use strict';
+        $.ajax({
+            url: path,
+            dataType: "xml",
+            success: function (xmlResponse) {
+                // get the contents from search data
+                var datas = $("entry", xmlResponse).map(function () {
+                    return {
+                        title: $("title", this).text(),
+                        content: $("content", this).text(),
+                        url: $("url", this).text()
+                    };
+                }).get();
+                var $input = document.getElementById(search_id);
+                var $resultContent = document.getElementById(content_id);
+                $input.addEventListener('input', function () {
+                    var str = '<ul class=\"search-result-list\">';
+                    var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                    $resultContent.innerHTML = "";
+                    if (this.value.trim().length <= 0) {
+                        return;
+                    }
+                    // perform local searching
+                    datas.forEach(function (data) {
+                        var isMatch = true;
+                        var data_title = data.title.trim().toLowerCase();
+                        var data_content = data.content.trim().replace(/<[^>]+>/g, "").toLowerCase();
+                        var data_url = data.url;
+                        data_url = data_url.indexOf('/') === 0 ? data.url : '/' + data_url;
+                        var index_title = -1;
+                        var index_content = -1;
+                        var first_occur = -1;
+                        // only match artiles with not empty titles and contents
+                        if (data_title !== '' && data_content !== '') {
+                            keywords.forEach(function (keyword, i) {
+                                index_title = data_title.indexOf(keyword);
+                                index_content = data_content.indexOf(keyword);
+                                if (index_title < 0 && index_content < 0) {
+                                    isMatch = false;
+                                } else {
+                                    if (index_content < 0) {
+                                        index_content = 0;
+                                    }
+                                    if (i === 0) {
+                                        first_occur = index_content;
+                                    }
+                                }
+                            });
+                        }
+                        // show search results
+                        if (isMatch) {
+                            str += "<li><a href='" + data_url + "' class='search-result-title'>" + data_title + "</a>";
+                            var content = data.content.trim().replace(/<[^>]+>/g, "");
+                            if (first_occur >= 0) {
+                                // cut out 100 characters
+                                var start = first_occur - 20;
+                                var end = first_occur + 80;
+                                if (start < 0) {
+                                    start = 0;
+                                }
+                                if (start === 0) {
+                                    end = 100;
+                                }
+                                if (end > content.length) {
+                                    end = content.length;
+                                }
+                                var match_content = content.substr(start, end);
+                                // highlight all keywords
+                                keywords.forEach(function (keyword) {
+                                    var regS = new RegExp(keyword, "gi");
+                                    match_content = match_content.replace(regS, "<em class=\"search-keyword\">" + keyword + "</em>");
+                                });
+
+                                str += "<p class=\"search-result\">" + match_content + "...</p>"
+                            }
+                            str += "</li>";
+                        }
+                    });
+                    str += "</ul>";
+                    $resultContent.innerHTML = str;
+                });
+            }
+        });
+    };
+
+    searchFunc('/search.xml', 'searchInput', 'searchResult');
+});
+</script>
+
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Baidu Analytics -->
+
+    <!-- Baidu Push -->
+
+<script>
+    (function () {
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https') {
+            bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        } else {
+            bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+    
+    <script src="/libs/others/clicklove.js" async="async"></script>
+    
+    
+
+    
+
+    
+
+	
+    
+
+    
+
+    
+
+    
+    <script src="/libs/instantpage/instantpage.js" type="module"></script>
+    
+
+</body>
+
+</html>

@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="MIT 6.s081 Lab2 syscall, HUST UniqueStudio 联创团队">
+    <meta name="keywords" content="MIT 6.s081 Lab7 Multithreading, HUST UniqueStudio 联创团队">
     <meta name="description" content="华中科技大学 | UniqueStudio-Lab | Kernel &amp; Cloud">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>MIT 6.s081 Lab2 syscall | 观云岚-Watari&#39;s Blog</title>
+    <title>MIT 6.s081 Lab7 Multithreading | 观云岚-Watari&#39;s Blog</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -205,12 +205,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/18.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/13.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">MIT 6.s081 Lab2 syscall</h1>
+                    <h1 class="description center-align post-title">MIT 6.s081 Lab7 Multithreading</h1>
                 </div>
             </div>
         </div>
@@ -324,29 +324,12 @@
             <div class="row tag-cate">
                 <div class="col s7">
                     
-                    <div class="article-tag">
-                        
-                            <a href="/tags/MIT/">
-                                <span class="chip bg-color">MIT</span>
-                            </a>
-                        
-                            <a href="/tags/OS/">
-                                <span class="chip bg-color">OS</span>
-                            </a>
-                        
-                    </div>
+                          <div class="article-tag">
+                            <span class="chip bg-color">无标签</span>
+                          </div>
                     
                 </div>
                 <div class="col s5 right-align">
-                    
-                    <div class="post-cate">
-                        <i class="fas fa-bookmark fa-fw icon-category"></i>
-                        
-                            <a href="/categories/Labs/" class="post-category">
-                                Labs
-                            </a>
-                        
-                    </div>
                     
                 </div>
             </div>
@@ -355,21 +338,21 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2022-01-27
+                    2022-03-13
                 </div>
                 
 
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-check fa-fw"></i>更新日期:&nbsp;&nbsp;
-                    2022-03-10
+                    2022-03-13
                 </div>
                 
 
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    1.3k
+                    0
                 </div>
                 
 
@@ -389,152 +372,7 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>咕咕了一周多，今天总算把Lab2做完了。</p>
-<p>Lab2主要加深对系统调用的理解，做完确实学到了很多东西。</p>
-<p>这个Lab有两个任务：添加一个系统调用<strong>trace</strong>和系统调用<strong>sysinfo</strong>，实现的重点也和Lab1的写代码变成了理解内核代码。资料方面需要读完xv6book的第二章和第四章的第三节与第四节，并且要熟悉对应的源码：</p>
-<ul>
-<li>系统调用的用户空间代码：<code>user/user.h</code>和<code>user/usys.pl</code></li>
-<li>内核空间代码：<code>kernel/syscall.h</code>， <code>kernel/syscall.c</code></li>
-<li>进程相关的代码：<code>kernel/proc.h</code>和<code>kernel/proc.c</code></li>
-</ul>
-<p>实验的地址在<a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.828/2020/labs/syscall.html">这里</a></p>
-<h3 id="System-call-tracing"><a href="#System-call-tracing" class="headerlink" title="System call tracing"></a>System call tracing</h3><p>这个任务需要添加一个系统调用<strong>trace</strong>来追踪一个特定的系统调用的调用过程。在xv6中，每一个系统调用都有一个对应的编号，比如<strong>fork</strong>对应的编号<strong>SYS_fork</strong>值为1，而trace通过掩码的形式来追踪特定的系统调用，例如追踪fork，则调用trace(1 &lt;&lt; SYS_fork)，如果追踪到了就要输出进程id、系统调用的名称和返回值，并且trace还应该对子进程进行追踪。</p>
-<p>这张图比较清晰的描述了系统调用的流程：<img src="syscall.png" alt="syscall"></p>
-<p>根据任务提示，我们首先应该像lab1一样在Makefile中添加<code>$U/_trace</code>到 UPROGS。</p>
-<p>然后分别在对应的文件中添加<strong>trace</strong>的相关声明：</p>
-<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//user/user.h</span>
-<span class="token keyword">int</span> <span class="token function">trace</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-<span class="token comment">//user/usys.pl</span>
-<span class="token function">entry</span><span class="token punctuation">(</span><span class="token string">"trace"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-<span class="token comment">//kernel/syscall.h</span>
-<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">SYS_trace</span> <span class="token expression"><span class="token number">22</span></span></span>
-
-<span class="token comment">//kernel/syscall.c:107</span>
-<span class="token keyword">extern</span> uint64 <span class="token function">sys_trace</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>从教程或者生成的usys.S中，可以看到<code>li a7, SYS_trace</code>，说明系统调用号被存在了寄存器a7中，所以在<code>kernel/syscall.c</code>中，syscall函数通过<code>p-&gt;trapframe-&gt;a7</code>来获取系统调用的类型，然后通过函数指针的方式调用对应的系统调用函数。</p>
-<p>接下来需要实现sys_trace这个函数，首先需要在<code>kernel/proc.h</code>中给proc这个结构体添加一个掩码mask，然后需要从寄存器里面取出它，需要使用到<code>argint</code>这个函数，具体实现如下：</p>
-<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//kernel/sysproc.c</span>
-uint64 <span class="token function">sys_trace</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
-<span class="token punctuation">{</span>
-    <span class="token keyword">int</span> mask<span class="token punctuation">;</span>
-    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token function">argint</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>mask<span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
-    <span class="token function">myproc</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-&gt;</span> mask <span class="token operator">=</span> mask<span class="token punctuation">;</span>
-    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>为了能够追踪子进程，我们需要修改fork函数，将mask直接传递下去就行</p>
-<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//kernel/proc.c</span>
-<span class="token comment">//add in fork()</span>
-np<span class="token operator">-&gt;</span>mask <span class="token operator">=</span> p<span class="token operator">-&gt;</span>mask<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p>接下来需要打印信息，修改syscall函数，记得函数的返回值是在a0寄存器中：</p>
-<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token function">syscall</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
-<span class="token punctuation">{</span>
-    <span class="token keyword">int</span> num<span class="token punctuation">;</span>
-    <span class="token keyword">struct</span> <span class="token class-name">proc</span> <span class="token operator">*</span>p <span class="token operator">=</span> <span class="token function">myproc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-    num <span class="token operator">=</span> p<span class="token operator">-&gt;</span>trapframe<span class="token operator">-&gt;</span>a7<span class="token punctuation">;</span>
-    <span class="token keyword">if</span><span class="token punctuation">(</span>num <span class="token operator">&gt;</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> num <span class="token operator">&lt;</span> <span class="token function">NELEM</span><span class="token punctuation">(</span>syscalls<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> syscalls<span class="token punctuation">[</span>num<span class="token punctuation">]</span><span class="token punctuation">)</span>
-    <span class="token punctuation">{</span>
-        p<span class="token operator">-&gt;</span>trapframe<span class="token operator">-&gt;</span>a0 <span class="token operator">=</span> syscalls<span class="token punctuation">[</span>num<span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    	<span class="token comment">//只增加下面这一行就行</span>
-        <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token operator">&lt;&lt;</span>num<span class="token punctuation">)</span> <span class="token operator">&amp;</span> p<span class="token operator">-&gt;</span>mask<span class="token punctuation">)</span> <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d: syscall %s -&gt; %d\n"</span><span class="token punctuation">,</span> p<span class="token operator">-&gt;</span>pid<span class="token punctuation">,</span> syscalls_name<span class="token punctuation">[</span>num<span class="token punctuation">]</span><span class="token punctuation">,</span> p<span class="token operator">-&gt;</span>trapframe<span class="token operator">-&gt;</span>a0<span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-    <span class="token keyword">else</span>
-    <span class="token punctuation">{</span>
-    	<span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d %s: unknown sys call %d\n"</span><span class="token punctuation">,</span>p<span class="token operator">-&gt;</span>pid<span class="token punctuation">,</span> p<span class="token operator">-&gt;</span>name<span class="token punctuation">,</span> num<span class="token punctuation">)</span><span class="token punctuation">;</span>
-    	p<span class="token operator">-&gt;</span>trapframe<span class="token operator">-&gt;</span>a0 <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>为了输出系统调用的名称，还应该新增一个数组来保存对应的值。</p>
-<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">char</span><span class="token operator">*</span> syscalls_name<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
-<span class="token punctuation">[</span>SYS_fork<span class="token punctuation">]</span>    <span class="token string">"fork"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_exit<span class="token punctuation">]</span>    <span class="token string">"exit"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_wait<span class="token punctuation">]</span>    <span class="token string">"wait"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_pipe<span class="token punctuation">]</span>    <span class="token string">"pipe"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_read<span class="token punctuation">]</span>    <span class="token string">"read"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_kill<span class="token punctuation">]</span>    <span class="token string">"kill"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_exec<span class="token punctuation">]</span>    <span class="token string">"exec"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_fstat<span class="token punctuation">]</span>   <span class="token string">"fstat"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_chdir<span class="token punctuation">]</span>   <span class="token string">"chdir"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_dup<span class="token punctuation">]</span>     <span class="token string">"dup"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_getpid<span class="token punctuation">]</span>  <span class="token string">"getpid"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_sbrk<span class="token punctuation">]</span>    <span class="token string">"sbrk"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_sleep<span class="token punctuation">]</span>   <span class="token string">"sleep"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_uptime<span class="token punctuation">]</span>  <span class="token string">"uptime"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_open<span class="token punctuation">]</span>    <span class="token string">"open"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_write<span class="token punctuation">]</span>   <span class="token string">"write"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_mknod<span class="token punctuation">]</span>   <span class="token string">"mknod"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_unlink<span class="token punctuation">]</span>  <span class="token string">"unlink"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_link<span class="token punctuation">]</span>    <span class="token string">"link"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_mkdir<span class="token punctuation">]</span>   <span class="token string">"mkdir"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_close<span class="token punctuation">]</span>   <span class="token string">"close"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_trace<span class="token punctuation">]</span>   <span class="token string">"trace"</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span>SYS_sysinfo<span class="token punctuation">]</span> <span class="token string">"sysinfo"</span><span class="token punctuation">,</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这样第一个任务就做完了。</p>
-<h3 id="Sysinfo"><a href="#Sysinfo" class="headerlink" title="Sysinfo"></a>Sysinfo</h3><p>和任务一相似，首先添加声明：</p>
-<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//user/user.h</span>
-<span class="token keyword">int</span> <span class="token function">sysinfo</span><span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">sysinfo</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-<span class="token comment">//user/usys.pl</span>
-<span class="token function">entry</span><span class="token punctuation">(</span><span class="token string">"sysinfo"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-<span class="token comment">//kernel/syscall.h</span>
-<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">SYS_sysinfo</span> <span class="token expression"><span class="token number">23</span></span></span>
-
-<span class="token comment">//kernel/syscall.c:108</span>
-<span class="token keyword">extern</span> uint64 <span class="token function">sys_sysinfo</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>查看sysinfo这个结构体，发现只有两个参数，一个是保存空闲内存信息，一个是保存正在运行的进程数目。根据提示，我们需要自己实现两个函数来获取这两个参数的值。</p>
-<h4 id="获取可用内存"><a href="#获取可用内存" class="headerlink" title="获取可用内存"></a>获取可用内存</h4><p>阅读<code>kernel\kalloc.c</code>，可以发现可分配物理内存其实是用一个链表实现的，每个节点的大小都是4096，申请内存时，将链表的头部节点分出去然后向后移一位。那么获取可用的内存就很简单了，直接输出链表内的非空节点数*4096即可。</p>
-<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//kernel/kalloc.c</span>
-uint64 <span class="token function">free_mem</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> 
-<span class="token punctuation">{</span>
-    <span class="token keyword">struct</span> <span class="token class-name">run</span> <span class="token operator">*</span>r <span class="token operator">=</span> kmem<span class="token punctuation">.</span>freelist<span class="token punctuation">;</span>
-    uint64 num <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
-    <span class="token keyword">while</span> <span class="token punctuation">(</span>r<span class="token punctuation">)</span>
-    <span class="token punctuation">{</span>
-        num<span class="token operator">++</span><span class="token punctuation">;</span>
-        r <span class="token operator">=</span> r<span class="token operator">-&gt;</span>next<span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-    <span class="token keyword">return</span> num <span class="token operator">*</span> PGSIZE<span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h4 id="获取进程数目"><a href="#获取进程数目" class="headerlink" title="获取进程数目"></a>获取进程数目</h4><p>这个更简单了，根据提示，只要把state等于UNUSED的进程排除掉就行了。</p>
-<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//kernel/proc.c</span>
-<span class="token keyword">int</span> <span class="token function">nproc</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
-<span class="token punctuation">{</span>
-  <span class="token keyword">struct</span> <span class="token class-name">proc</span> <span class="token operator">*</span>p<span class="token punctuation">;</span>
-  <span class="token keyword">int</span> num <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
-  <span class="token keyword">for</span><span class="token punctuation">(</span>p <span class="token operator">=</span> proc<span class="token punctuation">;</span> p <span class="token operator">&lt;</span> <span class="token operator">&amp;</span>proc<span class="token punctuation">[</span>NPROC<span class="token punctuation">]</span><span class="token punctuation">;</span> p<span class="token operator">++</span><span class="token punctuation">)</span>
-    <span class="token keyword">if</span><span class="token punctuation">(</span>p <span class="token operator">-&gt;</span> state <span class="token operator">!=</span> UNUSED<span class="token punctuation">)</span> num<span class="token operator">++</span><span class="token punctuation">;</span>
-  <span class="token keyword">return</span> num<span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>完成了上面两个函数后，就可以实现sys_sysinfo了。</p>
-<p>首先把那两个函数的声明添加到<code>kernel\defs.h</code>，根据提示，需要使用copyout这个函数将sysinfo复制回用户空间，具体实现如下：</p>
-<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//kernel/sysproc.c</span>
-uint64 <span class="token function">sys_sysinfo</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
-<span class="token punctuation">{</span>
-    <span class="token keyword">struct</span> <span class="token class-name">sysinfo</span> info<span class="token punctuation">;</span>
-    <span class="token keyword">struct</span> <span class="token class-name">proc</span> <span class="token operator">*</span>p <span class="token operator">=</span> <span class="token function">myproc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    uint64 addr<span class="token punctuation">;</span>
-    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token function">argaddr</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token operator">&amp;</span>addr<span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
-    info<span class="token punctuation">.</span>freemem <span class="token operator">=</span> <span class="token function">free_mem</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    info<span class="token punctuation">.</span>nproc <span class="token operator">=</span> <span class="token function">nproc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token function">copyout</span><span class="token punctuation">(</span>p<span class="token operator">-&gt;</span>pagetable<span class="token punctuation">,</span> addr<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>info<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>info<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
-    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这样整个lab就做完了。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>如果说新人任务的shell是让你知道什么是系统调用和怎么用，那么这个lab则是告诉你系统调用的具体原理，包括内核空间与用户空间，ecall指令和trapframe，还有页表等等许多知识，确实受益匪浅。</p>
-
+                
                 
             </div>
             <hr/>
@@ -560,7 +398,7 @@ uint64 <span class="token function">sys_sysinfo</span><span class="token punctua
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="https://watari.xyz/mit-6-s081-lab2-syscall/">https://watari.xyz/mit-6-s081-lab2-syscall/</a>
+                    <a href="https://watari.xyz/mit-6-s081-lab7-multithreading/">https://watari.xyz/mit-6-s081-lab7-multithreading/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -597,15 +435,7 @@ uint64 <span class="token function">sys_sysinfo</span><span class="token punctua
                 <div class="post-meta__tag-list" style="display: inline-block;">
                     
                         <div class="article-tag">
-                            
-                                <a href="/tags/MIT/">
-                                    <span class="chip bg-color">MIT</span>
-                                </a>
-                            
-                                <a href="/tags/OS/">
-                                    <span class="chip bg-color">OS</span>
-                                </a>
-                            
+                            <span class="chip bg-color">无标签</span>
                         </div>
                     
                 </div>
@@ -651,13 +481,13 @@ uint64 <span class="token function">sys_sysinfo</span><span class="token punctua
             <div class="article-badge left-badge text-color">
                 <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/mit-6-s081-lab3-pagetabel/">
+                <a href="/mit-6-s081-lab8-locks/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="MIT 6.s081 Lab3 pagetabel">
+                        <img src="/medias/featureimages/11.jpg" class="responsive-img" alt="MIT 6.s081 Lab8 Locks">
                         
-                        <span class="card-title">MIT 6.s081 Lab3 pagetabel</span>
+                        <span class="card-title">MIT 6.s081 Lab8 Locks</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -668,31 +498,15 @@ uint64 <span class="token function">sys_sysinfo</span><span class="token punctua
                     </div>
                     <div class="publish-info">
                         <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2022-02-14
+                            <i class="far fa-clock fa-fw icon-date"></i>2022-03-13
                         </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-bookmark fa-fw icon-category"></i>
-                            
-                            <a href="/categories/Labs/" class="post-category">
-                                    Labs
-                                </a>
-                            
+                            <i class="fas fa-user fa-fw"></i>
+                            Watari
                             
                         </span>
                     </div>
-                </div>
-                
-                <div class="card-action article-tags">
-                    
-                    <a href="/tags/MIT/">
-                        <span class="chip bg-color">MIT</span>
-                    </a>
-                    
-                    <a href="/tags/OS/">
-                        <span class="chip bg-color">OS</span>
-                    </a>
-                    
                 </div>
                 
             </div>
@@ -704,13 +518,13 @@ uint64 <span class="token function">sys_sysinfo</span><span class="token punctua
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/mit-6-s081-lab1-util/">
+                <a href="/mit-6-s081-lab6-copy-on-write-fork-for-xv6/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="MIT 6.s081 Lab1 util">
+                        <img src="/medias/featureimages/23.jpg" class="responsive-img" alt="MIT 6.s081 Lab6 Copy-on-Write Fork for xv6">
                         
-                        <span class="card-title">MIT 6.s081 Lab1 util</span>
+                        <span class="card-title">MIT 6.s081 Lab6 Copy-on-Write Fork for xv6</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -721,7 +535,7 @@ uint64 <span class="token function">sys_sysinfo</span><span class="token punctua
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-01-19
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-03-07
                             </span>
                         <span class="publish-author">
                             

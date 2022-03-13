@@ -362,14 +362,14 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-check fa-fw"></i>更新日期:&nbsp;&nbsp;
-                    2022-03-07
+                    2022-03-13
                 </div>
                 
 
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    0
+                    126
                 </div>
                 
 
@@ -389,7 +389,9 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                
+                <p>Lab6和Lab5比较相似，都是利用页错误的一些实现，这个Lab是要我们实现写时复制(Copy on Write)。</p>
+<p>在 shell 中执行指令时，首先会 fork 一个子进程，然后在子进程中使用 exec 执行 shell 中的指令。在这个过程中，fork 需要完整的拷贝所有父进程的地址空间，但在 exec 执行时，又会完全丢弃这个地址空间，创建一个新的，因此会造成很大的浪费。</p>
+
                 
             </div>
             <hr/>
@@ -502,18 +504,17 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="far fa-dot-circle"></i>&nbsp;本篇
-            </div>
+                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/mit-6-s081-lab6-copy-on-write-fork-for-xv6/">
+                <a href="/mit-6-s081-lab7-multithreading/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/23.jpg" class="responsive-img" alt="MIT 6.s081 Lab6 Copy-on-Write Fork for xv6">
+                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="MIT 6.s081 Lab7 Multithreading">
                         
-                        <span class="card-title">MIT 6.s081 Lab6 Copy-on-Write Fork for xv6</span>
+                        <span class="card-title">MIT 6.s081 Lab7 Multithreading</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -523,33 +524,16 @@
                         
                     </div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-03-07
-                            </span>
+                        <span class="publish-date">
+                            <i class="far fa-clock fa-fw icon-date"></i>2022-03-13
+                        </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-bookmark fa-fw icon-category"></i>
-                            
-                            <a href="/categories/Labs/" class="post-category">
-                                    Labs
-                                </a>
-                            
+                            <i class="fas fa-user fa-fw"></i>
+                            Watari
                             
                         </span>
                     </div>
-                </div>
-
-                
-                <div class="card-action article-tags">
-                    
-                    <a href="/tags/MIT/">
-                        <span class="chip bg-color">MIT</span>
-                    </a>
-                    
-                    <a href="/tags/OS/">
-                        <span class="chip bg-color">OS</span>
-                    </a>
-                    
                 </div>
                 
             </div>
@@ -786,7 +770,7 @@
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">7.9k</span>&nbsp;字
+                class="white-color">9.5k</span>&nbsp;字
             
             
             

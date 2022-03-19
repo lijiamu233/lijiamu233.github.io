@@ -324,12 +324,29 @@
             <div class="row tag-cate">
                 <div class="col s7">
                     
-                          <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
-                          </div>
+                    <div class="article-tag">
+                        
+                            <a href="/tags/MIT/">
+                                <span class="chip bg-color">MIT</span>
+                            </a>
+                        
+                            <a href="/tags/OS/">
+                                <span class="chip bg-color">OS</span>
+                            </a>
+                        
+                    </div>
                     
                 </div>
                 <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Labs/" class="post-category">
+                                Labs
+                            </a>
+                        
+                    </div>
                     
                 </div>
             </div>
@@ -345,14 +362,14 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-check fa-fw"></i>更新日期:&nbsp;&nbsp;
-                    2022-03-13
+                    2022-03-19
                 </div>
                 
 
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    0
+                    1.4k
                 </div>
                 
 
@@ -372,7 +389,189 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                
+                <p>暂时结束了对操作系统虚拟化方面的一些探讨，Lab7和Lab8主要是对操作系统并发的专题学习。其中Lab7的主题是多线程。</p>
+<p>在xv6中，线程调度的过程还是很值得探讨的。</p>
+<p>xv6中线程调度的过程大概如下所示：</p>
+<ul>
+<li>首先是用户线程接收到了时钟中断，强迫CPU从用户空间进程切换到内核，同时在 trampoline 代码中，保存当前寄存器状态到 trapframe 中；</li>
+<li>在 usertrap 处理中断时，切换到了该进程对应的内核线程；</li>
+<li>内核线程在内核中，先做一些操作，然后调用 swtch 函数，保存用户进程对应的内核线程的寄存器至 context 对象；</li>
+<li>swtch 函数并不是直接从一个内核线程切换到另一个内核线程；而是先切换到当前 cpu 对应的调度器线程，之后就在调度器线程的 context 下执行 schedulder 函数中；</li>
+<li>schedulder 函数会再次调用 swtch 函数，切换到下一个内核线程中，由于该内核线程肯定也调用了 swtch 函数，所以之前的 swtch 函数会被恢复，并返回到内核线程所对应进程的系统调用或者中断处理程序中。</li>
+<li>当内核程序执行完成之后，trapframe 中的用户寄存器会被恢复，完成线程调度。</li>
+</ul>
+<p><img src="swtch.png" alt="线程调度"></p>
+<p>线程调度的过程主要是保存 context 上下文状态，因为这里的切换全都是以函数调用的形式，因此这里只需要保存被调用者保存的寄存器（Callee-saved register）即可，调用者的寄存器会自动保存在trapframe中。</p>
+<p>至于为什么scheduler函数需要一个专门的线程来运行，是为了防止在线程调度中进程被其他进程唤醒，最后可能会导致两个进程拥有同样的堆栈，总之是复杂的并发问题。</p>
+<p>回到实验，本实验总共有三个任务，但后两个任务和xv6的关系不是很大。前置知识是阅读xv6book的第7章并且学习一些并发编程的知识。</p>
+<h2 id="Uthread-switching-between-threads"><a href="#Uthread-switching-between-threads" class="headerlink" title="Uthread: switching between threads"></a>Uthread: switching between threads</h2><p>这个任务的目的是实现一个用户态的线程调度方法，多个线程也只能运行在一个 CPU 上，并且没有时钟中断来强制执行调度，需要线程函数本身在合适的时候主动 yield 释放 CPU。</p>
+<p>根据实验的提示，我们首先完成上下文切换，也就是完成<code>uthread_switch.S</code>，这里可以直接参考或者复制<code>swtch.S</code></p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">.text
+
+    /*
+         * save the old thread's registers,
+         * restore the new thread's registers.
+         */
+
+    .globl thread_switch
+thread_switch:
+    /* YOUR CODE HERE */
+    sd ra, 0(a0)
+    sd sp, 8(a0)
+    sd s0, 16(a0)
+    sd s1, 24(a0)
+    sd s2, 32(a0)
+    sd s3, 40(a0)
+    sd s4, 48(a0)
+    sd s5, 56(a0)
+    sd s6, 64(a0)
+    sd s7, 72(a0)
+    sd s8, 80(a0)
+    sd s9, 88(a0)
+    sd s10, 96(a0)
+    sd s11, 104(a0)
+
+    ld ra, 0(a1)
+    ld sp, 8(a1)
+    ld s0, 16(a1)
+    ld s1, 24(a1)
+    ld s2, 32(a1)
+    ld s3, 40(a1)
+    ld s4, 48(a1)
+    ld s5, 56(a1)
+    ld s6, 64(a1)
+    ld s7, 72(a1)
+    ld s8, 80(a1)
+    ld s9, 88(a1)
+    ld s10, 96(a1)
+    ld s11, 104(a1)
+
+    ret    /* return to ra */<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>然后从 proc.h 中复制一下 context 结构体内容，用于保存 ra、sp 以及 callee-saved registers：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">struct</span> <span class="token class-name">context</span> <span class="token punctuation">{</span>
+  uint64 ra<span class="token punctuation">;</span>
+  uint64 sp<span class="token punctuation">;</span>
+
+  <span class="token comment">// callee-saved</span>
+  uint64 s0<span class="token punctuation">;</span>
+  uint64 s1<span class="token punctuation">;</span>
+  uint64 s2<span class="token punctuation">;</span>
+  uint64 s3<span class="token punctuation">;</span>
+  uint64 s4<span class="token punctuation">;</span>
+  uint64 s5<span class="token punctuation">;</span>
+  uint64 s6<span class="token punctuation">;</span>
+  uint64 s7<span class="token punctuation">;</span>
+  uint64 s8<span class="token punctuation">;</span>
+  uint64 s9<span class="token punctuation">;</span>
+  uint64 s10<span class="token punctuation">;</span>
+  uint64 s11<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>将上面定义的context结构体添加到thread结构体中：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">struct</span> <span class="token class-name">thread</span> <span class="token punctuation">{</span>
+  <span class="token keyword">char</span>       stack<span class="token punctuation">[</span>STACK_SIZE<span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment">/* the thread's stack */</span>
+  <span class="token keyword">int</span>        state<span class="token punctuation">;</span>             <span class="token comment">/* FREE, RUNNING, RUNNABLE */</span>
+  <span class="token keyword">struct</span> <span class="token class-name">context</span> contex<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>接着完善调度，因为是被调用者保存，所以我们switch的参数先后分别是当前进程和下一个进程：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">void</span> 
+<span class="token function">thread_schedule</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token comment">// ...................</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>current_thread <span class="token operator">!=</span> next_thread<span class="token punctuation">)</span> <span class="token punctuation">{</span>         <span class="token comment">/* switch threads?  */</span>
+    next_thread<span class="token operator">-&gt;</span>state <span class="token operator">=</span> RUNNING<span class="token punctuation">;</span>
+    t <span class="token operator">=</span> current_thread<span class="token punctuation">;</span>
+    current_thread <span class="token operator">=</span> next_thread<span class="token punctuation">;</span>
+    <span class="token comment">/* YOUR CODE HERE
+     * Invoke thread_switch to switch from t to next_thread:
+     * thread_switch(??, ??);
+     */</span>
+    <span class="token function">thread_switch</span><span class="token punctuation">(</span><span class="token punctuation">(</span>uint64<span class="token punctuation">)</span><span class="token operator">&amp;</span>t<span class="token operator">-&gt;</span>contex<span class="token punctuation">,</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span><span class="token operator">&amp;</span>current_thread<span class="token operator">-&gt;</span>contex<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span>
+    next_thread <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>最后完成一些线程初始化的信息就可以了：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">void</span> 
+<span class="token function">thread_create</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token punctuation">(</span><span class="token operator">*</span>func<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">struct</span> <span class="token class-name">thread</span> <span class="token operator">*</span>t<span class="token punctuation">;</span>
+
+  <span class="token keyword">for</span> <span class="token punctuation">(</span>t <span class="token operator">=</span> all_thread<span class="token punctuation">;</span> t <span class="token operator">&lt;</span> all_thread <span class="token operator">+</span> MAX_THREAD<span class="token punctuation">;</span> t<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>t<span class="token operator">-&gt;</span>state <span class="token operator">==</span> FREE<span class="token punctuation">)</span> <span class="token keyword">break</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  t<span class="token operator">-&gt;</span>state <span class="token operator">=</span> RUNNABLE<span class="token punctuation">;</span>
+  <span class="token comment">// YOUR CODE HERE</span>
+  t<span class="token operator">-&gt;</span>contex<span class="token punctuation">.</span>ra <span class="token operator">=</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>func<span class="token punctuation">;</span>
+  t<span class="token operator">-&gt;</span>contex<span class="token punctuation">.</span>sp <span class="token operator">=</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span><span class="token operator">&amp;</span>t<span class="token operator">-&gt;</span>stack <span class="token operator">+</span> <span class="token punctuation">(</span>STACK_SIZE <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>任务一结束。</p>
+<h2 id="Using-threads"><a href="#Using-threads" class="headerlink" title="Using threads"></a>Using threads</h2><p>这个任务的目的是通过加锁解决哈希表 race-condition 导致的数据丢失问题。</p>
+<p>如果只加一把大锁，会导致性能丢失，所以我们要细化锁的粒度，改成在每个槽位加一把小锁。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token class-name">pthread_mutex_t</span> lock<span class="token punctuation">[</span>NBUCKET<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">static</span> 
+<span class="token keyword">void</span> <span class="token function">put</span><span class="token punctuation">(</span><span class="token keyword">int</span> key<span class="token punctuation">,</span> <span class="token keyword">int</span> value<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">int</span> i <span class="token operator">=</span> key <span class="token operator">%</span> NBUCKET<span class="token punctuation">;</span>
+
+  <span class="token comment">// is the key already present?</span>
+  <span class="token function">pthread_mutex_lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">entry</span> <span class="token operator">*</span>e <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span>e <span class="token operator">=</span> table<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span> e <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">;</span> e <span class="token operator">=</span> e<span class="token operator">-&gt;</span>next<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>e<span class="token operator">-&gt;</span>key <span class="token operator">==</span> key<span class="token punctuation">)</span>
+      <span class="token keyword">break</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token comment">// update the existing key.</span>
+    e<span class="token operator">-&gt;</span>value <span class="token operator">=</span> value<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    <span class="token comment">// the new is new.</span>
+    <span class="token function">insert</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> value<span class="token punctuation">,</span> <span class="token operator">&amp;</span>table<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> table<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">pthread_mutex_unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">static</span> <span class="token keyword">struct</span> <span class="token class-name">entry</span><span class="token operator">*</span>
+<span class="token function">get</span><span class="token punctuation">(</span><span class="token keyword">int</span> key<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">int</span> i <span class="token operator">=</span> key <span class="token operator">%</span> NBUCKET<span class="token punctuation">;</span>
+
+  <span class="token function">pthread_mutex_lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">entry</span> <span class="token operator">*</span>e <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span>e <span class="token operator">=</span> table<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span> e <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">;</span> e <span class="token operator">=</span> e<span class="token operator">-&gt;</span>next<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>e<span class="token operator">-&gt;</span>key <span class="token operator">==</span> key<span class="token punctuation">)</span> <span class="token keyword">break</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">pthread_mutex_unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> e<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<h2 id="Barrier"><a href="#Barrier" class="headerlink" title="Barrier"></a>Barrier</h2><p>这个任务的目的是实现一个内存屏障，其实就是条件变量的基本使用。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">void</span> 
+<span class="token function">barrier</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token comment">// YOUR CODE HERE</span>
+  <span class="token comment">//</span>
+  <span class="token comment">// Block until all threads have called barrier() and</span>
+  <span class="token comment">// then increment bstate.round.</span>
+  <span class="token comment">//</span>
+  <span class="token function">pthread_mutex_lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bstate<span class="token punctuation">.</span>barrier_mutex<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token operator">++</span>bstate<span class="token punctuation">.</span>nthread <span class="token operator">==</span> nthread<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    bstate<span class="token punctuation">.</span>nthread <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    bstate<span class="token punctuation">.</span>round<span class="token operator">++</span><span class="token punctuation">;</span>
+    <span class="token function">pthread_cond_broadcast</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bstate<span class="token punctuation">.</span>barrier_cond<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    <span class="token function">pthread_cond_wait</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bstate<span class="token punctuation">.</span>barrier_cond<span class="token punctuation">,</span> <span class="token operator">&amp;</span>bstate<span class="token punctuation">.</span>barrier_mutex<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">pthread_mutex_unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bstate<span class="token punctuation">.</span>barrier_mutex<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Lab7的总体难度还是比较低的，当然也许和之前有过并行编程的经验有关的。线程调度这方面的知识还是很有意思的，学到许多。</p>
+
                 
             </div>
             <hr/>
@@ -435,7 +634,15 @@
                 <div class="post-meta__tag-list" style="display: inline-block;">
                     
                         <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
+                            
+                                <a href="/tags/MIT/">
+                                    <span class="chip bg-color">MIT</span>
+                                </a>
+                            
+                                <a href="/tags/OS/">
+                                    <span class="chip bg-color">OS</span>
+                                </a>
+                            
                         </div>
                     
                 </div>
@@ -502,11 +709,27 @@
                         </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-user fa-fw"></i>
-                            Watari
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Labs/" class="post-category">
+                                    Labs
+                                </a>
+                            
                             
                         </span>
                     </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/MIT/">
+                        <span class="chip bg-color">MIT</span>
+                    </a>
+                    
+                    <a href="/tags/OS/">
+                        <span class="chip bg-color">OS</span>
+                    </a>
+                    
                 </div>
                 
             </div>
@@ -743,7 +966,7 @@
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">9.5k</span>&nbsp;字
+                class="white-color">13.6k</span>&nbsp;字
             
             
             

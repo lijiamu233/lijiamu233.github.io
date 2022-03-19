@@ -324,12 +324,29 @@
             <div class="row tag-cate">
                 <div class="col s7">
                     
-                          <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
-                          </div>
+                    <div class="article-tag">
+                        
+                            <a href="/tags/MIT/">
+                                <span class="chip bg-color">MIT</span>
+                            </a>
+                        
+                            <a href="/tags/OS/">
+                                <span class="chip bg-color">OS</span>
+                            </a>
+                        
+                    </div>
                     
                 </div>
                 <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Labs/" class="post-category">
+                                Labs
+                            </a>
+                        
+                    </div>
                     
                 </div>
             </div>
@@ -345,14 +362,14 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-check fa-fw"></i>更新日期:&nbsp;&nbsp;
-                    2022-03-13
+                    2022-03-19
                 </div>
                 
 
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    0
+                    1.6k
                 </div>
                 
 
@@ -372,7 +389,283 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                
+                <p>Lab8是对锁相关的知识进行探讨。前置知识是xv6book的第六章以及3.5，8.1～8.3这些对物理内存分配和文件系统Buffer Cache相关内容。</p>
+<p>本次实验有两个任务，并且任务间完全独立，可以乱序做。不过核心思想都是减小锁的粒度来减少竞争。</p>
+<h2 id="Memory-allocator"><a href="#Memory-allocator" class="headerlink" title="Memory allocator"></a>Memory allocator</h2><p>第一个任务是解决内存块的竞争问题。目前的内存块的结构是利用一个大锁锁住一个 freelist 的方式。按照实验指导书所说，我们需要将 freelist 进行拆分，给每个 cpu 分配一个freelist，来降低竞争。</p>
+<p>根据任务提示，我们可以利用以及定义的常量NCPU。</p>
+<p>首先更改内存块的结构，拆成NCPU个小块：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/kalloc.c</span>
+
+<span class="token keyword">struct</span> <span class="token punctuation">{</span>
+  <span class="token keyword">struct</span> <span class="token class-name">spinlock</span> lock<span class="token punctuation">;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">run</span> <span class="token operator">*</span>freelist<span class="token punctuation">;</span>
+<span class="token punctuation">}</span> kmem<span class="token punctuation">[</span>NCPU<span class="token punctuation">]</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>然后修改<code>kinit()</code>，<code>kfree（）</code>，注意在调用<code>cpuid()</code>时，要调用<code>push_off()</code>和<code>pop_off()</code>来关闭中断。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/kalloc.c</span>
+
+<span class="token keyword">void</span>
+<span class="token function">kinit</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> NCPU<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+  <span class="token function">initlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>kmem<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>lock<span class="token punctuation">,</span> <span class="token string">"kmem"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">freerange</span><span class="token punctuation">(</span>end<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token operator">*</span><span class="token punctuation">)</span>PHYSTOP<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span>
+<span class="token function">kfree</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>pa<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">struct</span> <span class="token class-name">run</span> <span class="token operator">*</span>r<span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>pa <span class="token operator">%</span> PGSIZE<span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span> <span class="token operator">||</span> <span class="token punctuation">(</span><span class="token keyword">char</span><span class="token operator">*</span><span class="token punctuation">)</span>pa <span class="token operator">&lt;</span> end <span class="token operator">||</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>pa <span class="token operator">&gt;=</span> PHYSTOP<span class="token punctuation">)</span>
+    <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"kfree"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Fill with junk to catch dangling refs.</span>
+  <span class="token function">memset</span><span class="token punctuation">(</span>pa<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> PGSIZE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  r <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">run</span><span class="token operator">*</span><span class="token punctuation">)</span>pa<span class="token punctuation">;</span>
+
+  <span class="token function">push_off</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> id <span class="token operator">=</span> <span class="token function">cpuid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">pop_off</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token function">acquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>kmem<span class="token punctuation">[</span>id<span class="token punctuation">]</span><span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  r<span class="token operator">-&gt;</span>next <span class="token operator">=</span> kmem<span class="token punctuation">[</span>id<span class="token punctuation">]</span><span class="token punctuation">.</span>freelist<span class="token punctuation">;</span>
+  kmem<span class="token punctuation">[</span>id<span class="token punctuation">]</span><span class="token punctuation">.</span>freelist <span class="token operator">=</span> r<span class="token punctuation">;</span>
+  <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>kmem<span class="token punctuation">[</span>id<span class="token punctuation">]</span><span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>最后是修改<code>kalloc()</code>，根据实验要求，我们需要在一个cpu的空间不够的时候从另外一个cpu上偷一块来：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/kalloc.c</span>
+
+<span class="token keyword">void</span> <span class="token operator">*</span>
+<span class="token function">kalloc</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">struct</span> <span class="token class-name">run</span> <span class="token operator">*</span>r<span class="token punctuation">;</span>
+
+  <span class="token function">push_off</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> id <span class="token operator">=</span> <span class="token function">cpuid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">pop_off</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token function">acquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>kmem<span class="token punctuation">[</span>id<span class="token punctuation">]</span><span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  r <span class="token operator">=</span> kmem<span class="token punctuation">[</span>id<span class="token punctuation">]</span><span class="token punctuation">.</span>freelist<span class="token punctuation">;</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span>r<span class="token punctuation">)</span>
+    kmem<span class="token punctuation">[</span>id<span class="token punctuation">]</span><span class="token punctuation">.</span>freelist <span class="token operator">=</span> r<span class="token operator">-&gt;</span>next<span class="token punctuation">;</span>
+  <span class="token keyword">else</span><span class="token punctuation">{</span>
+    <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> NCPU<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+      <span class="token keyword">if</span><span class="token punctuation">(</span>i <span class="token operator">==</span> id<span class="token punctuation">)</span> <span class="token keyword">continue</span><span class="token punctuation">;</span>
+      <span class="token function">acquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>kmem<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      r <span class="token operator">=</span> kmem<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>freelist<span class="token punctuation">;</span>
+      <span class="token keyword">if</span><span class="token punctuation">(</span>r<span class="token punctuation">)</span>
+        kmem<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>freelist <span class="token operator">=</span> r<span class="token operator">-&gt;</span>next<span class="token punctuation">;</span>
+      <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>kmem<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span><span class="token punctuation">(</span>r<span class="token punctuation">)</span> <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>kmem<span class="token punctuation">[</span>id<span class="token punctuation">]</span><span class="token punctuation">.</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span><span class="token punctuation">(</span>r<span class="token punctuation">)</span>
+    <span class="token function">memset</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">char</span><span class="token operator">*</span><span class="token punctuation">)</span>r<span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> PGSIZE<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// fill with junk</span>
+  <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token operator">*</span><span class="token punctuation">)</span>r<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这样任务一就完成了，难度不算很大。</p>
+<h2 id="Buffer-cache"><a href="#Buffer-cache" class="headerlink" title="Buffer cache"></a>Buffer cache</h2><p>任务二的目的是解决 cache 缓存竞争问题。可以参考任务一，设计小粒度的锁。不过缓存区大小是固定的，不能随意更改。而且，题目要求使用 ticks 的方式代替现有的 LRU 机制。</p>
+<p>根据任务提示，我们设定固定数量且为质数的桶来减少散列冲突，因为Hint里面提到了13，那么就设定为13个bucket。同时因为要用ticks的方式取代LRU，所以我们还需要获取 trap.c 中的 ticks 变量，并且在buf结构体中添加一个lastuse的字段。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/buf.h</span>
+<span class="token keyword">struct</span> <span class="token class-name">buf</span> <span class="token punctuation">{</span>
+  <span class="token keyword">int</span> valid<span class="token punctuation">;</span>   <span class="token comment">// has data been read from disk?</span>
+  <span class="token keyword">int</span> disk<span class="token punctuation">;</span>    <span class="token comment">// does disk "own" buf?</span>
+  uint dev<span class="token punctuation">;</span>
+  uint blockno<span class="token punctuation">;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">sleeplock</span> lock<span class="token punctuation">;</span>
+  uint refcnt<span class="token punctuation">;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">buf</span> <span class="token operator">*</span>prev<span class="token punctuation">;</span> <span class="token comment">// LRU cache list</span>
+  <span class="token keyword">struct</span> <span class="token class-name">buf</span> <span class="token operator">*</span>next<span class="token punctuation">;</span>
+  uchar data<span class="token punctuation">[</span>BSIZE<span class="token punctuation">]</span><span class="token punctuation">;</span>
+  uint lastuse<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">NBUCKET</span> <span class="token expression"><span class="token number">13</span></span></span>
+
+<span class="token comment">// kernel/bio.c</span>
+<span class="token keyword">extern</span> uint ticks<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>接下来是有关锁的设计，因为buf的大小是固定的，所以没法像任务一中直接用bcache数组，所以为了防止死锁我们还需要一把全局的大锁。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/bio.c</span>
+
+<span class="token keyword">struct</span> <span class="token punctuation">{</span>
+  <span class="token keyword">struct</span> <span class="token class-name">spinlock</span> global_lock<span class="token punctuation">;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">buf</span> buf<span class="token punctuation">[</span>NBUF<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Linked list of all buffers, through prev/next.</span>
+  <span class="token comment">// Sorted by how recently the buffer was used.</span>
+  <span class="token comment">// head.next is most recent, head.prev is least.</span>
+  <span class="token keyword">struct</span> <span class="token class-name">buf</span> head<span class="token punctuation">[</span>NBUCKET<span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">spinlock</span> lock<span class="token punctuation">[</span>NBUCKET<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span> bcache<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>然后修改初始化环节：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/bio.c</span>
+
+<span class="token keyword">void</span>
+<span class="token function">binit</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">struct</span> <span class="token class-name">buf</span> <span class="token operator">*</span>b<span class="token punctuation">;</span>
+
+  <span class="token function">initlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>global_lock<span class="token punctuation">,</span> <span class="token string">"bcache_global"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> NBUCKET<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+  <span class="token function">initlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">"bcache"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// Create linked list of buffers</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> NBUCKET<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+  <span class="token punctuation">{</span>
+    bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>prev <span class="token operator">=</span> <span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>next <span class="token operator">=</span> <span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// bcache.head.prev = &amp;bcache.head;</span>
+  <span class="token comment">// bcache.head.next = &amp;bcache.head;</span>
+  <span class="token keyword">for</span><span class="token punctuation">(</span>b <span class="token operator">=</span> bcache<span class="token punctuation">.</span>buf<span class="token punctuation">;</span> b <span class="token operator">&lt;</span> bcache<span class="token punctuation">.</span>buf<span class="token operator">+</span>NBUF<span class="token punctuation">;</span> b<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+    b<span class="token operator">-&gt;</span>next <span class="token operator">=</span> bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>next<span class="token punctuation">;</span>
+    b<span class="token operator">-&gt;</span>prev <span class="token operator">=</span> <span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token function">initsleeplock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>b<span class="token operator">-&gt;</span>lock<span class="token punctuation">,</span> <span class="token string">"buffer"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>next<span class="token operator">-&gt;</span>prev <span class="token operator">=</span> b<span class="token punctuation">;</span>
+    bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>next <span class="token operator">=</span> b<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>因为我们用ticks代替了LRU，所以遇到空闲块的时候直接设置它的使用时间即可。以下是对一些相关函数的修改，都没什么难度。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/bio.c</span>
+
+<span class="token keyword">void</span>
+<span class="token function">brelse</span><span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">buf</span> <span class="token operator">*</span>b<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">holdingsleep</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>b<span class="token operator">-&gt;</span>lock<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"brelse"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token function">releasesleep</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>b<span class="token operator">-&gt;</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token function">acquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>b<span class="token operator">-&gt;</span>blockno <span class="token operator">%</span> NBUCKET<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  b<span class="token operator">-&gt;</span>refcnt<span class="token operator">--</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>b<span class="token operator">-&gt;</span>refcnt <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// no one is waiting for it.</span>
+    <span class="token comment">// b-&gt;next-&gt;prev = b-&gt;prev;</span>
+    <span class="token comment">// b-&gt;prev-&gt;next = b-&gt;next;</span>
+    <span class="token comment">// b-&gt;next = bcache.head.next;</span>
+    <span class="token comment">// b-&gt;prev = &amp;bcache.head;</span>
+    <span class="token comment">// bcache.head.next-&gt;prev = b;</span>
+    <span class="token comment">// bcache.head.next = b;</span>
+    b<span class="token operator">-&gt;</span>lastuse <span class="token operator">=</span> ticks<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>b<span class="token operator">-&gt;</span>blockno <span class="token operator">%</span> NBUCKET<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span>
+<span class="token function">bpin</span><span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">buf</span> <span class="token operator">*</span>b<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function">acquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>b<span class="token operator">-&gt;</span>blockno <span class="token operator">%</span> NBUCKET<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  b<span class="token operator">-&gt;</span>refcnt<span class="token operator">++</span><span class="token punctuation">;</span>
+  <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>b<span class="token operator">-&gt;</span>blockno <span class="token operator">%</span> NBUCKET<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span>
+<span class="token function">bunpin</span><span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">buf</span> <span class="token operator">*</span>b<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function">acquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>b<span class="token operator">-&gt;</span>blockno <span class="token operator">%</span> NBUCKET<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  b<span class="token operator">-&gt;</span>refcnt<span class="token operator">--</span><span class="token punctuation">;</span>
+  <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>b<span class="token operator">-&gt;</span>blockno <span class="token operator">%</span> NBUCKET<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>最后一步也是最关键的一部是修改bget，这里锁的获取和释放关系比较复杂，而且还涉及从别的cpu偷取，所以代码可能会比较繁杂，但总体的准则是：优先获取全局大锁，然后获取自己的小锁，锁用完要即时释放。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">static</span> <span class="token keyword">struct</span> <span class="token class-name">buf</span><span class="token operator">*</span>
+<span class="token function">bget</span><span class="token punctuation">(</span>uint dev<span class="token punctuation">,</span> uint blockno<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">struct</span> <span class="token class-name">buf</span> <span class="token operator">*</span>b<span class="token punctuation">,</span> <span class="token operator">*</span>b2 <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">int</span> i <span class="token operator">=</span> blockno <span class="token operator">%</span> NBUCKET<span class="token punctuation">,</span> minticks <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token function">acquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Is the block already cached?</span>
+  <span class="token keyword">for</span><span class="token punctuation">(</span>b <span class="token operator">=</span> bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>next<span class="token punctuation">;</span> b <span class="token operator">!=</span> <span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span> b <span class="token operator">=</span> b<span class="token operator">-&gt;</span>next<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>b<span class="token operator">-&gt;</span>dev <span class="token operator">==</span> dev <span class="token operator">&amp;&amp;</span> b<span class="token operator">-&gt;</span>blockno <span class="token operator">==</span> blockno<span class="token punctuation">)</span><span class="token punctuation">{</span>
+      b<span class="token operator">-&gt;</span>refcnt<span class="token operator">++</span><span class="token punctuation">;</span>
+      <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">acquiresleep</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>b<span class="token operator">-&gt;</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> b<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// Not cached.</span>
+  <span class="token function">acquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>global_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">acquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span><span class="token punctuation">(</span>b <span class="token operator">=</span> bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>next<span class="token punctuation">;</span> b <span class="token operator">!=</span> <span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span> b <span class="token operator">=</span> b<span class="token operator">-&gt;</span>next<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>b<span class="token operator">-&gt;</span>dev <span class="token operator">==</span> dev <span class="token operator">&amp;&amp;</span> b<span class="token operator">-&gt;</span>blockno <span class="token operator">==</span> blockno<span class="token punctuation">)</span><span class="token punctuation">{</span>
+      b<span class="token operator">-&gt;</span>refcnt<span class="token operator">++</span><span class="token punctuation">;</span>
+      <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>global_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">acquiresleep</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>b<span class="token operator">-&gt;</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> b<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// Recycle the least recently used (LRU) unused buffer.</span>
+  <span class="token keyword">for</span><span class="token punctuation">(</span>b <span class="token operator">=</span> bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>next<span class="token punctuation">;</span> b <span class="token operator">!=</span> <span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span> b <span class="token operator">=</span> b<span class="token operator">-&gt;</span>next<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>b<span class="token operator">-&gt;</span>refcnt <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span>b2 <span class="token operator">==</span> <span class="token number">0</span> <span class="token operator">||</span> b<span class="token operator">-&gt;</span>lastuse <span class="token operator">&lt;</span> minticks<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+          b2 <span class="token operator">=</span> b<span class="token punctuation">;</span>
+          minticks <span class="token operator">=</span> b<span class="token operator">-&gt;</span>lastuse<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>b2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    b2<span class="token operator">-&gt;</span>dev <span class="token operator">=</span> dev<span class="token punctuation">;</span>
+    b2<span class="token operator">-&gt;</span>blockno <span class="token operator">=</span> blockno<span class="token punctuation">;</span>
+    b2<span class="token operator">-&gt;</span>refcnt<span class="token operator">++</span><span class="token punctuation">;</span>
+    b2<span class="token operator">-&gt;</span>valid <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>global_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">acquiresleep</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>b2<span class="token operator">-&gt;</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> b2<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">//steal other block</span>
+  <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">int</span> j <span class="token operator">=</span> <span class="token punctuation">(</span>i <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> NBUCKET<span class="token punctuation">;</span> j <span class="token operator">!=</span> i<span class="token punctuation">;</span> j <span class="token operator">=</span> <span class="token punctuation">(</span>j <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> NBUCKET<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token function">acquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span><span class="token punctuation">(</span>b <span class="token operator">=</span> bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">.</span>next<span class="token punctuation">;</span> b <span class="token operator">!=</span> <span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">;</span> b <span class="token operator">=</span> b<span class="token operator">-&gt;</span>next<span class="token punctuation">)</span><span class="token punctuation">{</span>
+      <span class="token keyword">if</span><span class="token punctuation">(</span>b<span class="token operator">-&gt;</span>refcnt <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">if</span><span class="token punctuation">(</span>b2 <span class="token operator">==</span> <span class="token number">0</span> <span class="token operator">||</span> b<span class="token operator">-&gt;</span>lastuse <span class="token operator">&lt;</span> minticks<span class="token punctuation">)</span>
+          <span class="token punctuation">{</span>
+            b2 <span class="token operator">=</span> b<span class="token punctuation">;</span>
+            minticks <span class="token operator">=</span> b<span class="token operator">-&gt;</span>lastuse<span class="token punctuation">;</span>
+          <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>b2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      b2<span class="token operator">-&gt;</span>dev <span class="token operator">=</span> dev<span class="token punctuation">;</span>
+      b2<span class="token operator">-&gt;</span>blockno <span class="token operator">=</span> blockno<span class="token punctuation">;</span>
+      b2<span class="token operator">-&gt;</span>refcnt<span class="token operator">++</span><span class="token punctuation">;</span>
+      b2<span class="token operator">-&gt;</span>valid <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+      b2<span class="token operator">-&gt;</span>next<span class="token operator">-&gt;</span>prev <span class="token operator">=</span> b2<span class="token operator">-&gt;</span>prev<span class="token punctuation">;</span>
+      b2<span class="token operator">-&gt;</span>prev<span class="token operator">-&gt;</span>next <span class="token operator">=</span> b2<span class="token operator">-&gt;</span>next<span class="token punctuation">;</span>
+      <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      b2<span class="token operator">-&gt;</span>next <span class="token operator">=</span> bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>next<span class="token punctuation">;</span>
+      b2<span class="token operator">-&gt;</span>prev <span class="token operator">=</span> <span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+      bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>next<span class="token operator">-&gt;</span>prev <span class="token operator">=</span> b2<span class="token punctuation">;</span>
+      bcache<span class="token punctuation">.</span>head<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>next <span class="token operator">=</span> b2<span class="token punctuation">;</span>
+      <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>global_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">acquiresleep</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>b2<span class="token operator">-&gt;</span>lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> b2<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>lock<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>bcache<span class="token punctuation">.</span>global_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"bget: no buffers"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这样任务二也做完了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>其实这个Lab的难度也不算很大，但是比较考验细心程度，因为锁的获取和释放哪怕一个不慎就有可能造成竞争或者死锁。</p>
+
                 
             </div>
             <hr/>
@@ -435,7 +728,15 @@
                 <div class="post-meta__tag-list" style="display: inline-block;">
                     
                         <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
+                            
+                                <a href="/tags/MIT/">
+                                    <span class="chip bg-color">MIT</span>
+                                </a>
+                            
+                                <a href="/tags/OS/">
+                                    <span class="chip bg-color">OS</span>
+                                </a>
+                            
                         </div>
                     
                 </div>
@@ -503,13 +804,29 @@
                             </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-user fa-fw"></i>
-                            Watari
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Labs/" class="post-category">
+                                    Labs
+                                </a>
+                            
                             
                         </span>
                     </div>
                 </div>
 
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/MIT/">
+                        <span class="chip bg-color">MIT</span>
+                    </a>
+                    
+                    <a href="/tags/OS/">
+                        <span class="chip bg-color">OS</span>
+                    </a>
+                    
+                </div>
                 
             </div>
         </div>
@@ -541,11 +858,27 @@
                             </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-user fa-fw"></i>
-                            Watari
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Labs/" class="post-category">
+                                    Labs
+                                </a>
+                            
                             
                         </span>
                     </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/MIT/">
+                        <span class="chip bg-color">MIT</span>
+                    </a>
+                    
+                    <a href="/tags/OS/">
+                        <span class="chip bg-color">OS</span>
+                    </a>
+                    
                 </div>
                 
             </div>
@@ -729,7 +1062,7 @@
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">9.5k</span>&nbsp;字
+                class="white-color">13.6k</span>&nbsp;字
             
             
             

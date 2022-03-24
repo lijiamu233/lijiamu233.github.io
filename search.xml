@@ -4,6 +4,73 @@
   
     
     <entry>
+      <title>MIT 6.s081 Lab11 networking</title>
+      <link href="/mit-6-s081-lab11-networking/"/>
+      <url>/mit-6-s081-lab11-networking/</url>
+      
+        <content type="html"><![CDATA[<p>本实验是整个6.s081的最后一个实验，而且跟xv6的关系也不大，要求你阅读<strong>E1000</strong>的硬件开发手册然后完善一个网卡驱动，实现<code>e1000_transmit()</code>和<code>e1000_recv()</code>这两个函数。</p><p>因为Hint给的非常详细，跟着Hint一步一步来就可以了。</p><p>直接放代码吧：</p><pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">int</span><span class="token function">e1000_transmit</span><span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">mbuf</span> <span class="token operator">*</span>m<span class="token punctuation">)</span><span class="token punctuation">{</span>  <span class="token comment">//</span>  <span class="token comment">// Your code here.</span>  <span class="token comment">//</span>  <span class="token comment">// the mbuf contains an ethernet frame; program it into</span>  <span class="token comment">// the TX descriptor ring so that the e1000 sends it. Stash</span>  <span class="token comment">// a pointer so that it can be freed after sending.</span>  <span class="token comment">//</span>  <span class="token function">acquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>e1000_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>  uint index <span class="token operator">=</span> regs<span class="token punctuation">[</span>E1000_TDT<span class="token punctuation">]</span><span class="token punctuation">;</span>  <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span>tx_ring<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">.</span>status <span class="token operator">&amp;</span> E1000_TXD_STAT_DD<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">{</span>    <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>e1000_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>  <span class="token punctuation">}</span>  <span class="token keyword">if</span><span class="token punctuation">(</span>tx_mbufs<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">)</span>    <span class="token function">mbuffree</span><span class="token punctuation">(</span>tx_mbufs<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  tx_mbufs<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">=</span> m<span class="token punctuation">;</span>  tx_ring<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">.</span>length <span class="token operator">=</span> m<span class="token operator">-&gt;</span>len<span class="token punctuation">;</span>  tx_ring<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">.</span>addr <span class="token operator">=</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>m<span class="token operator">-&gt;</span>head<span class="token punctuation">;</span>  tx_ring<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">.</span>cmd <span class="token operator">=</span> E1000_TXD_CMD_RS <span class="token operator">|</span> E1000_TXD_CMD_EOP<span class="token punctuation">;</span>  regs<span class="token punctuation">[</span>E1000_TDT<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>index <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> TX_RING_SIZE<span class="token punctuation">;</span>  <span class="token function">release</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>e1000_lock<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span><span class="token punctuation">}</span><span class="token keyword">static</span> <span class="token keyword">void</span><span class="token function">e1000_recv</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span><span class="token punctuation">{</span>  <span class="token comment">//</span>  <span class="token comment">// Your code here.</span>  <span class="token comment">//</span>  <span class="token comment">// Check for packets that have arrived from the e1000</span>  <span class="token comment">// Create and deliver an mbuf for each packet (using net_rx()).</span>  <span class="token comment">//</span>  uint index <span class="token operator">=</span> regs<span class="token punctuation">[</span>E1000_RDT<span class="token punctuation">]</span><span class="token punctuation">;</span>  index <span class="token operator">=</span> <span class="token punctuation">(</span>index <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> RX_RING_SIZE<span class="token punctuation">;</span>  <span class="token keyword">while</span><span class="token punctuation">(</span>rx_ring<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">.</span>status <span class="token operator">&amp;</span> E1000_RXD_STAT_DD<span class="token punctuation">)</span> <span class="token punctuation">{</span>    rx_mbufs<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token operator">-&gt;</span>len <span class="token operator">=</span> rx_ring<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">.</span>length<span class="token punctuation">;</span>    <span class="token function">net_rx</span><span class="token punctuation">(</span>rx_mbufs<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span>rx_mbufs<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">mbufalloc</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>      <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"e1000"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>    rx_ring<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">.</span>addr <span class="token operator">=</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>rx_mbufs<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token operator">-&gt;</span>head<span class="token punctuation">;</span>    rx_ring<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">.</span>status <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>    index <span class="token operator">=</span> <span class="token punctuation">(</span>index <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> RX_RING_SIZE<span class="token punctuation">;</span>  <span class="token punctuation">}</span>  <span class="token keyword">if</span><span class="token punctuation">(</span>index <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>    index <span class="token operator">=</span> RX_RING_SIZE<span class="token punctuation">;</span>  regs<span class="token punctuation">[</span>E1000_RDT<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>index <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> RX_RING_SIZE<span class="token punctuation">;</span><span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre><h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>6.s081总共11个实验，从各种角度由浅入深的了解xv6这个教学用操作系统的结构，一开始只是让你用已经写好的函数接口来实践多线程和系统调用，之后就需要你自己深入内核，自己添加系统调用，添加页表，修改文件系统等等。通过动手来亲自体验这些操作系统的共通性知识。尽管这些可能没有自己动手从零开始构建一个操作系统那么硬核，但是的确是一门操作系统入门的好课。之后还需要对操作系统进行更深入的学习。</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> Labs </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> MIT </tag>
+            
+            <tag> OS </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>MIT 6.s081 Lab10 mmap</title>
+      <link href="/mit-6-s081-lab10-mmap/"/>
+      <url>/mit-6-s081-lab10-mmap/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>MIT 6.s081 Lab9 File system</title>
+      <link href="/mit-6-s081-lab9-file-system/"/>
+      <url>/mit-6-s081-lab9-file-system/</url>
+      
+        <content type="html"><![CDATA[<p>根据《OSTEP》划分的三个部分，Lab9来到了持久性这一环节。本实验的内容是对文件系统进行一些研究。</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> Labs </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> MIT </tag>
+            
+            <tag> OS </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>MIT 6.s081 Lab8 Locks</title>
       <link href="/mit-6-s081-lab8-locks/"/>
       <url>/mit-6-s081-lab8-locks/</url>

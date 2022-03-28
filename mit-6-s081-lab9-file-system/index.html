@@ -362,14 +362,14 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-check fa-fw"></i>更新日期:&nbsp;&nbsp;
-                    2022-03-24
+                    2022-03-28
                 </div>
                 
 
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    39
+                    1.3k
                 </div>
                 
 
@@ -390,6 +390,248 @@
         <div class="card-content article-card-content">
             <div id="articleContent">
                 <p>根据《OSTEP》划分的三个部分，Lab9来到了持久性这一环节。本实验的内容是对文件系统进行一些研究。</p>
+<p>通过阅读xv6book的Chapter 9，我们可以了解xv6的文件系统是如何实现的。本实验总共有两个任务。</p>
+<h2 id="Large-Files"><a href="#Large-Files" class="headerlink" title="Large Files"></a>Large Files</h2><p>xv6中的 inode 有 12个直接索引（直接对应了 data 区域的磁盘块），1个一级索引（存放另一个指向 data 区域的索引）。因此，<strong>最多支持 12 + 256 = 268 个数据块</strong>。如下图所示：<img src="fs.png" alt="inode"></p>
+<p>因为这个设计，xv6 中存储文件的大小受到了限制，因此本实验的第一个任务就是<strong>通过实现二级索引扩大所支持的文件大小</strong>，使得其能够存放一个65803个块大小的文件。</p>
+<p>因为一个一级索引会指向256块，所以如果我们增加二级索引，就会让文件系统能存储的大小增加<strong>256*256-1</strong>块，因为少了一块存放用的直接块。所以总共的大小就是<strong>256*256+256+11=65803</strong>块。根据实验提示，我们首先修改dinode和inode这两个结构体，减少NDIRECT的值，增加二级索引大小的宏定义，然后保持addrs大小不变。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/fs.h </span>
+
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">NDIRECT</span> <span class="token expression"><span class="token number">11</span></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">NINDIRECT</span> <span class="token expression"><span class="token punctuation">(</span>BSIZE <span class="token operator">/</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>uint<span class="token punctuation">)</span><span class="token punctuation">)</span></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">NDINDIRECT</span> <span class="token expression">NINDIRECT <span class="token operator">*</span> NINDIRECT</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">MAXFILE</span> <span class="token expression"><span class="token punctuation">(</span>NDIRECT <span class="token operator">+</span> NINDIRECT <span class="token operator">+</span> NDINDIRECT<span class="token punctuation">)</span></span></span>
+
+<span class="token comment">// On-disk inode structure</span>
+<span class="token keyword">struct</span> <span class="token class-name">dinode</span> <span class="token punctuation">{</span>
+  <span class="token keyword">short</span> type<span class="token punctuation">;</span>           <span class="token comment">// File type</span>
+  <span class="token keyword">short</span> major<span class="token punctuation">;</span>          <span class="token comment">// Major device number (T_DEVICE only)</span>
+  <span class="token keyword">short</span> minor<span class="token punctuation">;</span>          <span class="token comment">// Minor device number (T_DEVICE only)</span>
+  <span class="token keyword">short</span> nlink<span class="token punctuation">;</span>          <span class="token comment">// Number of links to inode in file system</span>
+  uint size<span class="token punctuation">;</span>            <span class="token comment">// Size of file (bytes)</span>
+  uint addrs<span class="token punctuation">[</span>NDIRECT<span class="token operator">+</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">;</span>   <span class="token comment">// Data block addresses</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token comment">// kernel/file.h</span>
+
+<span class="token comment">// in-memory copy of an inode</span>
+<span class="token keyword">struct</span> <span class="token class-name">inode</span> <span class="token punctuation">{</span>
+  uint dev<span class="token punctuation">;</span>           <span class="token comment">// Device number</span>
+  uint inum<span class="token punctuation">;</span>          <span class="token comment">// Inode number</span>
+  <span class="token keyword">int</span> ref<span class="token punctuation">;</span>            <span class="token comment">// Reference count</span>
+  <span class="token keyword">struct</span> <span class="token class-name">sleeplock</span> lock<span class="token punctuation">;</span> <span class="token comment">// protects everything below here</span>
+  <span class="token keyword">int</span> valid<span class="token punctuation">;</span>          <span class="token comment">// inode has been read from disk?</span>
+
+  <span class="token keyword">short</span> type<span class="token punctuation">;</span>         <span class="token comment">// copy of disk inode</span>
+  <span class="token keyword">short</span> major<span class="token punctuation">;</span>
+  <span class="token keyword">short</span> minor<span class="token punctuation">;</span>
+  <span class="token keyword">short</span> nlink<span class="token punctuation">;</span>
+  uint size<span class="token punctuation">;</span>
+  uint addrs<span class="token punctuation">[</span>NDIRECT<span class="token operator">+</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>然后我们需要修改bmap，仿照已有的逻辑实现二级映射：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/fs.c</span>
+
+<span class="token keyword">static</span> uint
+<span class="token function">bmap</span><span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">inode</span> <span class="token operator">*</span>ip<span class="token punctuation">,</span> uint bn<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  uint addr<span class="token punctuation">,</span> <span class="token operator">*</span>a<span class="token punctuation">;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">buf</span> <span class="token operator">*</span>bp<span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span><span class="token punctuation">(</span>bn <span class="token operator">&lt;</span> NDIRECT<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span>addr <span class="token operator">=</span> ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>bn<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+      ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>bn<span class="token punctuation">]</span> <span class="token operator">=</span> addr <span class="token operator">=</span> <span class="token function">balloc</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> addr<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  bn <span class="token operator">-=</span> NDIRECT<span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span><span class="token punctuation">(</span>bn <span class="token operator">&lt;</span> NINDIRECT<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token comment">// Load indirect block, allocating if necessary.</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span>addr <span class="token operator">=</span> ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+      ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token punctuation">]</span> <span class="token operator">=</span> addr <span class="token operator">=</span> <span class="token function">balloc</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    bp <span class="token operator">=</span> <span class="token function">bread</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a <span class="token operator">=</span> <span class="token punctuation">(</span>uint<span class="token operator">*</span><span class="token punctuation">)</span>bp<span class="token operator">-&gt;</span>data<span class="token punctuation">;</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span>addr <span class="token operator">=</span> a<span class="token punctuation">[</span>bn<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+      a<span class="token punctuation">[</span>bn<span class="token punctuation">]</span> <span class="token operator">=</span> addr <span class="token operator">=</span> <span class="token function">balloc</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">log_write</span><span class="token punctuation">(</span>bp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">brelse</span><span class="token punctuation">(</span>bp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> addr<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  bn <span class="token operator">-=</span> NINDIRECT<span class="token punctuation">;</span>
+  <span class="token comment">// 二级索引</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span>bn <span class="token operator">&lt;</span> NDINDIRECT<span class="token punctuation">)</span>
+  <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span>addr <span class="token operator">=</span> ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+      ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> addr <span class="token operator">=</span> <span class="token function">balloc</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    bp <span class="token operator">=</span> <span class="token function">bread</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a <span class="token operator">=</span> <span class="token punctuation">(</span>uint<span class="token operator">*</span><span class="token punctuation">)</span>bp<span class="token operator">-&gt;</span>data<span class="token punctuation">;</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span>addr <span class="token operator">=</span> a<span class="token punctuation">[</span>bn<span class="token operator">/</span>NINDIRECT<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+      a<span class="token punctuation">[</span>bn<span class="token operator">/</span>NINDIRECT<span class="token punctuation">]</span> <span class="token operator">=</span> addr <span class="token operator">=</span> <span class="token function">balloc</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">log_write</span><span class="token punctuation">(</span>bp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">brelse</span><span class="token punctuation">(</span>bp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    bp <span class="token operator">=</span> <span class="token function">bread</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a <span class="token operator">=</span> <span class="token punctuation">(</span>uint<span class="token operator">*</span><span class="token punctuation">)</span>bp<span class="token operator">-&gt;</span>data<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>addr <span class="token operator">=</span> a<span class="token punctuation">[</span>bn<span class="token operator">%</span>NINDIRECT<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      a<span class="token punctuation">[</span>bn<span class="token operator">%</span>NINDIRECT<span class="token punctuation">]</span> <span class="token operator">=</span> addr <span class="token operator">=</span> <span class="token function">balloc</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">log_write</span><span class="token punctuation">(</span>bp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">brelse</span><span class="token punctuation">(</span>bp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> addr<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"bmap: out of range"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>最后通过itrunc来完成清理工作，同样是仿照bmap的逻辑进行释放：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/fs.c</span>
+
+<span class="token keyword">void</span>
+<span class="token function">itrunc</span><span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">inode</span> <span class="token operator">*</span>ip<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">int</span> i<span class="token punctuation">,</span> j<span class="token punctuation">;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">buf</span> <span class="token operator">*</span>bp<span class="token punctuation">,</span> <span class="token operator">*</span>bp2<span class="token punctuation">;</span>
+  uint <span class="token operator">*</span>a<span class="token punctuation">,</span><span class="token operator">*</span>a2<span class="token punctuation">;</span>
+
+  <span class="token keyword">for</span><span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> NDIRECT<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+      <span class="token function">bfree</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">if</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+    bp <span class="token operator">=</span> <span class="token function">bread</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a <span class="token operator">=</span> <span class="token punctuation">(</span>uint<span class="token operator">*</span><span class="token punctuation">)</span>bp<span class="token operator">-&gt;</span>data<span class="token punctuation">;</span>
+    <span class="token keyword">for</span><span class="token punctuation">(</span>j <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> j <span class="token operator">&lt;</span> NINDIRECT<span class="token punctuation">;</span> j<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+      <span class="token keyword">if</span><span class="token punctuation">(</span>a<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token function">bfree</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> a<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">brelse</span><span class="token punctuation">(</span>bp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">bfree</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+  <span class="token punctuation">{</span>
+    bp <span class="token operator">=</span> <span class="token function">bread</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a <span class="token operator">=</span> <span class="token punctuation">(</span>uint<span class="token operator">*</span><span class="token punctuation">)</span>bp<span class="token operator">-&gt;</span>data<span class="token punctuation">;</span>
+    <span class="token keyword">for</span><span class="token punctuation">(</span>j <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> j <span class="token operator">&lt;</span> NINDIRECT<span class="token punctuation">;</span> j<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+      <span class="token keyword">if</span><span class="token punctuation">(</span>a<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">)</span>
+      <span class="token punctuation">{</span>
+        bp2 <span class="token operator">=</span> <span class="token function">bread</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> a<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        a2 <span class="token operator">=</span> <span class="token punctuation">(</span>uint<span class="token operator">*</span><span class="token punctuation">)</span>bp2<span class="token operator">-&gt;</span>data<span class="token punctuation">;</span>
+        <span class="token keyword">for</span><span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> NINDIRECT<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">if</span><span class="token punctuation">(</span>a2<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">bfree</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> a2<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">brelse</span><span class="token punctuation">(</span>bp2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">bfree</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> a<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+        
+    <span class="token punctuation">}</span>
+    <span class="token function">brelse</span><span class="token punctuation">(</span>bp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">bfree</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>dev<span class="token punctuation">,</span> ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    ip<span class="token operator">-&gt;</span>addrs<span class="token punctuation">[</span>NDIRECT<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  ip<span class="token operator">-&gt;</span>size <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token function">iupdate</span><span class="token punctuation">(</span>ip<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>第一个任务完成。</p>
+<h2 id="Symbolic-links"><a href="#Symbolic-links" class="headerlink" title="Symbolic links"></a>Symbolic links</h2><p>这个任务是让你实现符号链接，也就是软链接。</p>
+<p>因为是通过系统调用的方式增加，所以还是老四样：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// user/usys.pl</span>
+
+<span class="token function">entry</span><span class="token punctuation">(</span><span class="token string">"symlink"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// user/user.h</span>
+
+<span class="token keyword">int</span> <span class="token function">symlink</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span><span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// kernel/syscall.h</span>
+
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">SYS_symlink</span> <span class="token expression"><span class="token number">22</span></span></span>
+
+<span class="token comment">// kernel/syscall.c</span>
+
+<span class="token keyword">extern</span> uint64 <span class="token function">sys_symlink</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">[</span>SYS_symlink<span class="token punctuation">]</span> sys_symlink<span class="token punctuation">,</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>声明了系统调用之后就是实现，先从寄存器中读取参数，然后开启事务，避免提交出错；为这个符号链接新建一个 inode；在符号链接的 data 中写入被链接的文件；最后，提交事务：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/sysfile.c</span>
+
+uint64
+<span class="token function">sys_symlink</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>  
+  <span class="token keyword">char</span> path<span class="token punctuation">[</span>MAXPATH<span class="token punctuation">]</span><span class="token punctuation">,</span> target<span class="token punctuation">[</span>MAXPATH<span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">inode</span> <span class="token operator">*</span>ip<span class="token punctuation">;</span>
+  <span class="token comment">// 读取参数</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token function">argstr</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> target<span class="token punctuation">,</span> MAXPATH<span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token function">argstr</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> path<span class="token punctuation">,</span> MAXPATH<span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+  <span class="token comment">// 开启事务</span>
+  <span class="token function">begin_op</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// 为这个符号链接新建一个 inode</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span>ip <span class="token operator">=</span> <span class="token function">create</span><span class="token punctuation">(</span>path<span class="token punctuation">,</span> T_SYMLINK<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">end_op</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// 在符号链接的 data 中写入被链接的文件</span>
+  <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token function">writei</span><span class="token punctuation">(</span>ip<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>target<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MAXPATH<span class="token punctuation">)</span> <span class="token operator">&lt;</span> MAXPATH<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">iunlockput</span><span class="token punctuation">(</span>ip<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">end_op</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// 提交事务</span>
+  <span class="token function">iunlockput</span><span class="token punctuation">(</span>ip<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">end_op</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>根据实验提示，我们需要增加一个新的文件类型宏定义<strong>T_SIMLINK</strong>和一个符号标志位<strong>O_NOFOLLOW</strong>，注意后者要进行与运算，所以位上不要有重叠。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/stat.h</span>
+
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">T_SYMLINK</span> <span class="token expression"><span class="token number">4</span></span></span>
+
+<span class="token comment">// kernel/fcntl.h</span>
+
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">O_NOFOLLOW</span> <span class="token expression"><span class="token number">0x010</span></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>接下来我们需要修改open系统调用并且要能支持递归查找，在这里设置了递归深度为20的上限：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// kernel/sysfile.c</span>
+<span class="token comment">// in sys_open()</span>
+
+<span class="token keyword">int</span> depth <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+ <span class="token keyword">while</span><span class="token punctuation">(</span>ip<span class="token operator">-&gt;</span>type <span class="token operator">==</span> T_SYMLINK <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token punctuation">(</span>omode <span class="token operator">&amp;</span> O_NOFOLLOW<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>depth<span class="token operator">++</span> <span class="token operator">&gt;=</span> <span class="token number">20</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">iunlockput</span><span class="token punctuation">(</span>ip<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">end_op</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token function">readi</span><span class="token punctuation">(</span>ip<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>uint64<span class="token punctuation">)</span>path<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MAXPATH<span class="token punctuation">)</span> <span class="token operator">&lt;</span> MAXPATH<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">iunlockput</span><span class="token punctuation">(</span>ip<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">end_op</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">iunlockput</span><span class="token punctuation">(</span>ip<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token punctuation">(</span>ip <span class="token operator">=</span> <span class="token function">namei</span><span class="token punctuation">(</span>path<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">end_op</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">ilock</span><span class="token punctuation">(</span>ip<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>如果遇到了一些奇怪的编译错误，可能是对应的头文件没有加的原因。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>文件系统这方面的知识比较细碎，尤其是要理解 namei, readi, writei 等跟 inode 有关的函数，还有文件系统的事务这一概念等。</p>
 
                 
             </div>
@@ -528,11 +770,27 @@
                         </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-user fa-fw"></i>
-                            Watari
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Labs/" class="post-category">
+                                    Labs
+                                </a>
+                            
                             
                         </span>
                     </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/MIT/">
+                        <span class="chip bg-color">MIT</span>
+                    </a>
+                    
+                    <a href="/tags/OS/">
+                        <span class="chip bg-color">OS</span>
+                    </a>
+                    
                 </div>
                 
             </div>
@@ -769,7 +1027,7 @@
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">14k</span>&nbsp;字
+                class="white-color">16.9k</span>&nbsp;字
             
             
             
